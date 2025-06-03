@@ -2,12 +2,15 @@
 ### Compile
 
 mkdir build  
+
 cd build  
+
 cmake ..  
+
 make  
 
 ### Execute
-(currently runs ori example)
+(currently runs pri example)
 
 ./run.sh 
 
