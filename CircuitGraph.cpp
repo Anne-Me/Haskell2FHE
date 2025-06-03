@@ -85,7 +85,6 @@ void CircuitGraph::defineSubgraphs(int num_Threads){
     int t = 0;
 
     for(int i = 0; i < gates.size(); i++){
-        cout << "skip: " << skip << endl;
         if(gates[i].depth == 0){
             if (skip < gap){
                 skip++;
@@ -122,7 +121,7 @@ void CircuitGraph::defineSubgraphs(int num_Threads){
                 latest_node_child_node = gates[latest_node].children[latest_node_child_counter];
                 stack<int> parent_nodes;
                 success = collect_parents(parent_nodes, latest_node_child_node, t); 
-                cout << "success for node " << latest_node_child_node << "+" << success << endl;
+          //      cout << "success for node " << latest_node_child_node << "+" << success << endl;
                 if(success){
                     // add all nodes to subgraph
                     while(parent_nodes.size() > 0){
@@ -176,7 +175,7 @@ void CircuitGraph::defineSubgraphs(int num_Threads){
 // whenever a node is at depth 0 it gets pushed on the stack & whever a node is not collected yet it gets pushed on the stack
 // child nodes always need to get pushed on the stack before their parents, the top thing on the stack needs to get computed first
 bool CircuitGraph::collect_parents(stack<int> &parent_nodes, int current_node, int t){
-    cout << "current node: " << current_node << endl; 
+  //  cout << "current node: " << current_node << endl; 
     if(isInOut(current_node)){
         return true; // skip inputs and outputs
     }
@@ -227,7 +226,7 @@ void CircuitGraph::collect_remaining(){
             gates[i].collected = idsg; // mark as collected in the last subgraph
             // find out what the dependencies of the subgraph are
             for (int j = 0; j < gates[i].parents.size(); j++) {
-                cout << "parent: " << gates[i].parents[j] << endl;
+                //cout << "parent: " << gates[i].parents[j] << endl;
                 int parent = gates[i].parents[j];
                 if (gates[parent].collected != -1 && gates[parent].collected != idsg) { // parent is part of a different subgraph
                     if (std::find(sg.dependencies.begin(), sg.dependencies.end(), gates[parent].collected) == sg.dependencies.end()) {

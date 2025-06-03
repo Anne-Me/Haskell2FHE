@@ -22,7 +22,7 @@ enum GATES{
 
 inline GATES convert(std::string gate_str){
     if (gate_str == "$_NAND_") return NAND;
-    else  if(gate_str == "$_ANDNOT_") return ANDYN;
+    else  if(gate_str == "$_ANDNOT_") return ANDYN; // A & ~B
     else if(gate_str == "$_OR_") return OR;
     else if(gate_str == "$_AND_") return AND;
     else if(gate_str == "$_XOR_") return XOR;

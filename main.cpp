@@ -63,6 +63,9 @@ reads json file and parses into CircuitGraph
 */
 void read_json_to_Circuit(string circuitpath, CircuitGraph &CG,int num_ciphertext){
     ifstream f(circuitpath);
+    if (!f.is_open()) {
+        throw std::runtime_error("Failed to open circuit file: " + circuitpath);
+    }
     json data = json::parse(f);
 
     int input_length=0;
@@ -258,6 +261,7 @@ int main(int argc, char** argv) {
     cout << "read cloud key" << endl;
 
     LweSample* input_registers = new_gate_bootstrapping_ciphertext_array(num_ciphertext * bitlength, params);
+
     LweSample* temp;
 
     // read the ciphertexts
@@ -268,6 +272,7 @@ int main(int argc, char** argv) {
 
         for (int j = 0; j<bitlength; j++) { 
             import_gate_bootstrapping_ciphertext_fromFile(in, &input_registers[j + bitlength * i], params);
+          
         }
         fclose(in);
     }

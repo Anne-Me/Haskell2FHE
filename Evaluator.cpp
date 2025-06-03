@@ -29,9 +29,10 @@ void Evaluator::parallel_evaluate(int num_threads){
     if (CG->subgraphs.size() == 0 || num_threads == 1) {
     // do single threaded stuff
         int first_gate = length_input + length_output; // first gate is the first working register
+
         for (int i = first_gate; i < CG->gates.size(); i++) {
             evaluate_gate(i);
-          //  cout << "evaluated gate: " << i << " of " << CG->gates.size() << " type " << to_string(CG->gates[i].type) << std::endl;
+            //cout << "evaluated gate: " << i << " of " << CG->gates.size() << " type " << to_string(CG->gates[i].type) << std::endl;
         }
         cout << "done evaluating whole circuit." << std::endl;
         return;
@@ -90,6 +91,7 @@ void Evaluator::evaluate_gate(int gate_id) {
                 int ct_ipA = node.parents[0]; 
                 int ct_ipB = node.parents[1];
                 int ct_out = node.out;
+                cout << ct_ipA << " " << ct_ipB << " " << ct_out << endl;
                 bootsXNOR(find_register(ct_out), find_register(ct_ipA), find_register(ct_ipB), bk);
                 break;
             }
@@ -120,6 +122,9 @@ void Evaluator::evaluate_gate(int gate_id) {
                 bootsORYN(find_register(ct_out), find_register(ct_ipA), find_register(ct_ipB), bk);
                 break;
             }
+            default: {
+                cout << "gate type: " << to_string(gate) << endl;
+            }
 
         }
 }
@@ -132,7 +137,6 @@ LweSample * Evaluator::find_register(int id) {
     if (id < length_input) {
         return &input_registers[id]; 
     } else if (id < length_input + length_output){
-        cout << "output register used: " << id - length_input << endl;
         return &output_registers[id - length_input];
     } else if (id < length_input+length_output+length_working){
         return &working_registers[id - length_input - length_output];

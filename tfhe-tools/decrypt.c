@@ -96,3 +96,4 @@ int main(int argc, char *argv[]) {
     delete_gate_bootstrapping_secret_keyset(key);
     return 0;
 }
+
