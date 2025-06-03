@@ -1,14 +1,11 @@
 
 ### Compile
-
+```
 mkdir build  
-
 cd build  
-
 cmake ..  
-
 make  
-
+```
 ### Execute
 (currently runs pri example)
 
