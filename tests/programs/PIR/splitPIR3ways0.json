@@ -1,0 +1,188 @@
+{
+    "dependencies": [],
+    "gates": [
+        {
+            "gate33": {
+                "children": [
+                    35
+                ],
+                "parents": [
+                    0,
+                    24
+                ],
+                "type": "$_XNOR_"
+            }
+        },
+        {
+            "gate34": {
+                "children": [
+                    35
+                ],
+                "parents": [
+                    1,
+                    25
+                ],
+                "type": "$_XOR_"
+            }
+        },
+        {
+            "gate35": {
+                "children": [
+                    39
+                ],
+                "parents": [
+                    33,
+                    34
+                ],
+                "type": "$_ANDNOT_"
+            }
+        },
+        {
+            "gate36": {
+                "children": [
+                    38
+                ],
+                "parents": [
+                    2,
+                    26
+                ],
+                "type": "$_XOR_"
+            }
+        },
+        {
+            "gate37": {
+                "children": [
+                    38
+                ],
+                "parents": [
+                    3,
+                    27
+                ],
+                "type": "$_XOR_"
+            }
+        },
+        {
+            "gate38": {
+                "children": [
+                    39
+                ],
+                "parents": [
+                    37,
+                    36
+                ],
+                "type": "$_OR_"
+            }
+        },
+        {
+            "gate39": {
+                "children": [
+                    47
+                ],
+                "parents": [
+                    35,
+                    38
+                ],
+                "type": "$_ANDNOT_"
+            }
+        },
+        {
+            "gate40": {
+                "children": [
+                    42
+                ],
+                "parents": [
+                    4,
+                    28
+                ],
+                "type": "$_XOR_"
+            }
+        },
+        {
+            "gate41": {
+                "children": [
+                    42
+                ],
+                "parents": [
+                    5,
+                    29
+                ],
+                "type": "$_XOR_"
+            }
+        },
+        {
+            "gate42": {
+                "children": [
+                    46
+                ],
+                "parents": [
+                    41,
+                    40
+                ],
+                "type": "$_OR_"
+            }
+        },
+        {
+            "gate43": {
+                "children": [
+                    45
+                ],
+                "parents": [
+                    6,
+                    30
+                ],
+                "type": "$_XOR_"
+            }
+        },
+        {
+            "gate44": {
+                "children": [
+                    45
+                ],
+                "parents": [
+                    7,
+                    31
+                ],
+                "type": "$_XOR_"
+            }
+        },
+        {
+            "gate45": {
+                "children": [
+                    46
+                ],
+                "parents": [
+                    44,
+                    43
+                ],
+                "type": "$_OR_"
+            }
+        },
+        {
+            "gate46": {
+                "children": [
+                    47
+                ],
+                "parents": [
+                    45,
+                    42
+                ],
+                "type": "$_OR_"
+            }
+        },
+        {
+            "gate47": {
+                "children": [
+                    79
+                ],
+                "parents": [
+                    39,
+                    46
+                ],
+                "type": "$_ANDNOT_"
+            }
+        }
+    ],
+    "id": 0,
+    "inputs": [],
+    "outputs": []
+}

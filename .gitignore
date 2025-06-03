@@ -1,5 +1,11 @@
 build/*
 
+# program specifically generated files
+*.data
+*.key
+
+.vscode/*
+
 # Prerequisites
 *.d
 
