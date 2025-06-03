@@ -9,9 +9,11 @@ make
 ### Execute
 (currently runs pri example)
 
+```
 ./run.sh 
+```
 
-
+## old 
 Install yosys: https://yosyshq.net/yosys/documentation.html  
 
 
