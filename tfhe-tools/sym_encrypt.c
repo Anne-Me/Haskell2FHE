@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) {
 
     if (n > 0) {
         for (int i = 0; i < n; i++) {
-            int plaintext = atoi(argv[3 + i]);
+            uint64_t plaintext = strtoull(argv[3 + i], NULL,10);
             LweSample *ciphertext = new_gate_bootstrapping_ciphertext_array(b, params);
 
             for (int j = 0; j < b; j++) {

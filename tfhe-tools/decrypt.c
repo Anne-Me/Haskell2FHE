@@ -82,13 +82,13 @@ int main(int argc, char *argv[]) {
         }
         fclose(ciphertext_file);
 
-        uint32_t plaintext = 0;
+        uint64_t plaintext = 0;
         for (int j = 0; j < bits; j++) {
             int bit = bootsSymDecrypt(&ciphertext[j], key);
-            plaintext |= (bit << j);
+            plaintext |= ((uint64_t )bit << j);
         }
 
-        printf("Plaintext %d: %u\n", i, plaintext);
+        printf("Plaintext %d: %lu\n", i, plaintext);
 
         delete_gate_bootstrapping_ciphertext_array(bits, ciphertext);
     }
