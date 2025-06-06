@@ -1,30 +1,28 @@
 {
     "dependencies": [
-        2,
+        0,
         1,
-        0
+        2
     ],
     "gates": [
         {
-            "gate78": {
-                "children": [
-                    79
-                ],
+            "gate6": {
+                "children": [],
                 "parents": [
-                    77,
-                    62
+                    4,
+                    5
                 ],
-                "type": "$_OR_"
+                "type": "$_AND_"
             }
         },
         {
-            "gate79": {
+            "gate8": {
                 "children": [],
                 "parents": [
-                    78,
-                    47
+                    0,
+                    7
                 ],
-                "type": "$_OR_"
+                "type": "$_XOR_"
             }
         }
     ],

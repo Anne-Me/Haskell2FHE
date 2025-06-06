@@ -187,13 +187,6 @@ bool CircuitGraph::collect_parents(stack<int> &parent_nodes, int current_node, i
             return false;
         }
     }
-    /*
-    if(gates[current_node].depth == 0){
-        parent_nodes.push(current_node);
-        gates[current_node].collected = t;
-        return true;
-    }
-    */
 
     if(gates[current_node].collected == -1){ // not included anywhere, go to collect all parents
         parent_nodes.push(current_node); // push child onto stack before its parent since it appears later in the circuit
@@ -228,7 +221,7 @@ void CircuitGraph::collect_remaining(){
             for (int j = 0; j < gates[i].parents.size(); j++) {
                 //cout << "parent: " << gates[i].parents[j] << endl;
                 int parent = gates[i].parents[j];
-                if (gates[parent].collected != -1 && gates[parent].collected != idsg) { // parent is part of a different subgraph
+                if (gates[parent].collected != -1 && !isInOut(gates[parent].id) && gates[parent].collected != idsg) { // parent is part of a different subgraph
                     if (std::find(sg.dependencies.begin(), sg.dependencies.end(), gates[parent].collected) == sg.dependencies.end()) {
                         sg.dependencies.push_back(gates[parent].collected);
                         cout << "added dependency: " << gates[parent].collected << endl;

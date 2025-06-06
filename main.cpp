@@ -74,7 +74,7 @@ void read_json_to_Circuit(string circuitpath, CircuitGraph &CG,int num_ciphertex
         input_length +=  data["modules"]["topEntity"]["ports"]["c$arg_"+to_string(i)]["bits"].size();  // length of whole input
     }
 
-    int temp_result_length = data["modules"]["topEntity"]["ports"]["result"]["bits"].size(); // TODO what if output has multiple registers
+    int temp_result_length = data["modules"]["topEntity"]["ports"]["result"]["bits"].size(); 
     int result_length =  0;
     for (int i = 0; i < temp_result_length; i++){
         try
@@ -100,6 +100,7 @@ void read_json_to_Circuit(string circuitpath, CircuitGraph &CG,int num_ciphertex
         CG.push_back_Gate(input_length + i, GATES::OUTPUT, {}, input_length+i); 
     }
 
+
     int counter = input_length+result_length; // it should start at the first value after input registers
     int offset = 2; // why yosys
     for (auto el : data["modules"]["topEntity"]["cells"].items())
@@ -107,6 +108,9 @@ void read_json_to_Circuit(string circuitpath, CircuitGraph &CG,int num_ciphertex
         string key = el.key();
         json conn = el.value()["connections"];
         string type = el.value()["type"];
+   
+        GATES gate_type = convert(type);
+      //  cout << "gate type: " << to_string(gate_type) << "counter: " << counter << endl;
 
         vector<int> parents;
         int in_1;
@@ -114,29 +118,36 @@ void read_json_to_Circuit(string circuitpath, CircuitGraph &CG,int num_ciphertex
         int out;
         if (conn.contains("A")) {
             in_1 = conn["A"][0];
+            parents.push_back(in_1-offset);
+          //  cout << "input A: " << in_1 << endl;
         } else {
             std::cerr << "Error: Gate " << counter+offset << " has no input A." << std::endl;
         }
         if (conn.contains("B")) {
             in_2 = conn["B"][0];
-        }else {
+            parents.push_back(in_2-offset);
+          //  cout << "input B: " << in_2 << endl;
+        }else if (gate_type != GATES::NOT){
             std::cerr << "Error: Gate " << counter+offset << " has no input B." << std::endl;
         }     
          // Y is not giving us the child info but register to place otput
         if (conn.contains("Y")) {
             out = (int)conn["Y"][0];
+          //  cout << "output: " << out << endl;
         }  
 
-        parents.push_back(in_1-offset);
-        parents.push_back(in_2-offset);
-        // gate type
-        GATES gate_type = convert(type);
-
         CG.push_back_Gate(counter, gate_type, parents, out-offset);
-        CG.addChild(in_1-offset, counter);
-        CG.addChild(in_2-offset, counter); 
+       // cout << "pushed gate" << endl;;
 
-       
+        if (conn.contains("A")) {
+          //  cout << "add A" << endl;
+            CG.addChild(in_1-offset, counter);
+         //   cout << "added child A" << endl;
+        }
+        if( conn.contains("B")) {
+            CG.addChild(in_2-offset, counter);
+          //  cout << "added child B" << endl;
+        }       
 
         counter++;
     }
@@ -144,7 +155,7 @@ void read_json_to_Circuit(string circuitpath, CircuitGraph &CG,int num_ciphertex
 }
 
 void printerror(){
-    std::cerr << "Usage: ./clashtoFHE -c jsoncircuitfile -n n a0 a1 .. a7 b1 b2 .. b7 -b bitlength -cloud cloudkey -out outfile " << std::endl;
+    std::cerr << "Usage: ./clashtoFHE -c jsoncircuitfile -n n a0 a1 .. a7 b1 b2 .. b7 -b bitlength [-t threads] -cloud cloudkey -out outfile " << std::endl;
     // optinall add -print for printing
     // -test for testing only
 }
@@ -163,7 +174,7 @@ int main(int argc, char** argv) {
 
     int num_ciphertext;
     int bitlength; 
-
+    int k = 1; // number of threads
    
     std::vector<char *> input_files;
     char* out_file;
@@ -230,7 +241,17 @@ int main(int argc, char** argv) {
             }
 
             bitlength = atoi(argv[++i]);
-        } else if (string("-test") == argv[i]){
+        } else if (string("-t") == argv[i]) {
+            if (argc <= i + 1)
+            {
+                printerror();
+                return -1;
+            }
+
+            k = atoi(argv[++i]);
+        }
+        
+         else if (string("-test") == argv[i]){
             createSimpleCircuitPlus2split3();
             return 0;
         } else if (string("-print") == argv[i]){
@@ -251,14 +272,10 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    cout << "read json" << endl;
-
     TFheGateBootstrappingCloudKeySet *cloud_key = new_tfheGateBootstrappingCloudKeySet_fromFile(cloud_key_file);
 
     const TFheGateBootstrappingParameterSet *params = cloud_key->params;  //retrieving the TFHE parameters from the secret key set.
     fclose(cloud_key_file);
-
-    cout << "read cloud key" << endl;
 
     LweSample* input_registers = new_gate_bootstrapping_ciphertext_array(num_ciphertext * bitlength, params);
 
@@ -285,20 +302,30 @@ int main(int argc, char** argv) {
     //read_json(circuitpath, out, num_ciphertext);
     CircuitGraph CG;
     read_json_to_Circuit(circuitpath, CG, num_ciphertext);
-    CG.computeDepths();
-    CG.defineSubgraphs(3);
-    CG.collect_remaining();
-    if(print == true){
-        CG.write_subgraphs("splitPIR3ways"); 
+    cout << "read circuit" << endl;
+    
+    if (k > 1){
+        CG.computeDepths();
+        CG.defineSubgraphs(k);
+        for (int i = 0; i < k; i++){
+            cout << "subgraph " << i << " has " << CG.subgraphs[i].gates.size() << " gates" << endl;
+        }
+
+        CG.collect_remaining();
+        cout << "remaining gates: " << CG.subgraphs[k].gates.size() << endl;
+        if(print == true){
+            CG.write_subgraphs("splitPIR3ways"); 
+        }
+
+        cout << "Splitting done" << endl;
     }
 
-    cout << "Splitting done" << endl;
 
 
     Evaluator evaluator;
 
     evaluator.init(&CG, cloud_key, params, input_registers);
-    evaluator.parallel_evaluate(1);
+    evaluator.parallel_evaluate(k); // TODO
 
     cout << "evaluated" << endl;
 

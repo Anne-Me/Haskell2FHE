@@ -1,0 +1,17 @@
+{
+    "dependencies": [],
+    "gates": [
+        {
+            "gate7": {
+                "children": [
+                    8
+                ],
+                "parents": [],
+                "type": "$_XOR_"
+            }
+        }
+    ],
+    "id": 2,
+    "inputs": [],
+    "outputs": []
+}

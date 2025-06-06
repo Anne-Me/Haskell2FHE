@@ -1,0 +1,39 @@
+{
+    "dependencies": [],
+    "gates": [
+        {
+            "gate0": {
+                "children": [
+                    4,
+                    8
+                ],
+                "parents": [],
+                "type": "$_AND_"
+            }
+        },
+        {
+            "gate1": {
+                "children": [
+                    4
+                ],
+                "parents": [],
+                "type": "$_AND_"
+            }
+        },
+        {
+            "gate4": {
+                "children": [
+                    6
+                ],
+                "parents": [
+                    0,
+                    1
+                ],
+                "type": "$_AND_"
+            }
+        }
+    ],
+    "id": 0,
+    "inputs": [],
+    "outputs": []
+}

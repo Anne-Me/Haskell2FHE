@@ -1,6 +1,7 @@
 #include "Evaluator.h"
 #include <iostream>
 #include "stdexcept"
+#include <thread>
 
 using json = nlohmann::json;
 using namespace std;
@@ -10,8 +11,6 @@ using namespace std;
 void Evaluator::init(CircuitGraph* CG, const TFheGateBootstrappingCloudKeySet* key, const TFheGateBootstrappingParameterSet* params, LweSample* input_registers) {
    
     this->CG = CG;
-    
-
     bk = key;
     this->length_input = CG->input_length;
     this->length_output = CG->output_length;
@@ -21,6 +20,7 @@ void Evaluator::init(CircuitGraph* CG, const TFheGateBootstrappingCloudKeySet* k
     this->working_registers = new_gate_bootstrapping_ciphertext_array(length_working, params);
     this->input_registers = input_registers;
     this->output_registers = new_gate_bootstrapping_ciphertext_array(length_output, params);
+    cout << "input length: " << length_input << " output length: " << length_output << " working length: " << length_working << endl;
 
 
 }
@@ -39,9 +39,26 @@ void Evaluator::parallel_evaluate(int num_threads){
     }
     if (num_threads >= CG->subgraphs.size()) {
         cout << " not using optimally many threads, using " << CG->subgraphs.size() << " threads instead of " << num_threads << std::endl;
-    } else {
-        // do multi-thread stuff
+        num_threads = CG->subgraphs.size();
+    } 
+    // do multi-thread stuff
+    vector<std::thread> threads;
+    threads.reserve(num_threads);
+
+    for (int i = 0; i < num_threads; ++i) {
+        threads.emplace_back(&Evaluator::evaluate_subgraph,this, i);
     }
+    cout << "started " << num_threads << " threads to evaluate subgraphs" << std::endl;
+
+    // wait for threads
+    for (auto& t : threads) {
+        if (t.joinable()) {
+            t.join();
+        }
+    }
+    cout << "joined all threads" << std::endl;
+    // execute remaining gates
+    evaluate_subgraph(num_threads);
 }
 
 void Evaluator::evaluate_subgraph(int t){
@@ -91,7 +108,6 @@ void Evaluator::evaluate_gate(int gate_id) {
                 int ct_ipA = node.parents[0]; 
                 int ct_ipB = node.parents[1];
                 int ct_out = node.out;
-                cout << ct_ipA << " " << ct_ipB << " " << ct_out << endl;
                 bootsXNOR(find_register(ct_out), find_register(ct_ipA), find_register(ct_ipB), bk);
                 break;
             }
