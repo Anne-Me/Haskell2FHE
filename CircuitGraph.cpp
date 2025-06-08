@@ -18,13 +18,19 @@ using namespace std;
 // assuming that by not disturbing the order of gates in the json file, we do not disturb the evaluation order
 
 CircuitGraph::CircuitGraph(int num_gates){
-    gates.reserve(num_gates);
+    gates.resize(num_gates);
     bottom_layer=0;
+    max_depth = 0;
 }
 
 CircuitGraph::CircuitGraph(){
     gates.reserve(1);
     bottom_layer=0;
+    max_depth = 0;
+}
+
+void CircuitGraph::resize(int num){
+    gates.resize(num);
 }
 
 
@@ -38,6 +44,20 @@ void CircuitGraph::push_back_Gate(int id, GATES type, std::vector<int> parents, 
     node.out = out;
     gates.push_back(node);
 }    
+
+void CircuitGraph::set_gate(int id, GATES type, std::vector<int> parents, int out){
+    if (id >= gates.size()) {
+        throw std::out_of_range("Gate ID is out of range.");
+    }
+    Node node;
+    node.id = id;
+    node.type = type;
+    node.parents = parents;
+    node.depth = 0;
+    node.collected = -1;
+    node.out = out;
+    gates[id] = node;
+}
 
 void CircuitGraph::addChild(int id, int cildId){
     gates[id].children.push_back(cildId);
@@ -58,6 +78,9 @@ void CircuitGraph::computeDepths(){
             }
         }
         gates[i].depth = depth;
+        if (depth > max_depth){
+            max_depth = depth;
+        }
         if (depth == 0){
             bottom_layer++;
         }
@@ -232,6 +255,20 @@ void CircuitGraph::collect_remaining(){
     }
     sg.closed = true;
     subgraphs.push_back(sg);
+}
+
+void CircuitGraph::executable_order(){
+    // brings gates into executable order by using their depth
+    // input gates are not collected
+    for (int i = 0; i < max_depth; i++){
+        for (int j = 0; j < gates.size(); j++){
+            if (gates[j].depth == i){
+                executable_order_vector.push_back(j);
+            }
+        }
+        
+    }
+    
 }
 
 

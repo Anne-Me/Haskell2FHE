@@ -86,22 +86,24 @@ void read_json_to_Circuit(string circuitpath, CircuitGraph &CG,int num_ciphertex
             continue;
         }
     }
+    int num_gates = data["modules"]["topEntity"]["cells"].size();
 
     cout << "input_length: " << input_length << " result_length: " << result_length << "\n";
     
     CG.input_length = input_length;
     CG.output_length = result_length;
+    CG.resize(input_length + result_length + num_gates);
 
     // add all the input registers and output registers
     for (int i = 0; i < input_length; i++) {
-        CG.push_back_Gate(i, GATES::INPUT, {}, input_length);
+        CG.set_gate(i, GATES::INPUT, {}, input_length);
     }
-    for (int i = 0; i < result_length; i++) {
-        CG.push_back_Gate(input_length + i, GATES::OUTPUT, {}, input_length+i); 
-    }
+    // for (int i = 0; i < result_length; i++) {
+    //    CG.push_back_Gate(input_length + i, GATES::OUTPUT, {}, input_length+i); 
+    //}
 
 
-    int counter = input_length+result_length; // it should start at the first value after input registers
+    int counter = input_length+result_length; 
     int offset = 2; // why yosys
     for (auto el : data["modules"]["topEntity"]["cells"].items())
     {
@@ -136,16 +138,16 @@ void read_json_to_Circuit(string circuitpath, CircuitGraph &CG,int num_ciphertex
           //  cout << "output: " << out << endl;
         }  
 
-        CG.push_back_Gate(counter, gate_type, parents, out-offset);
+        CG.set_gate(out-offset, gate_type, parents, out-offset);
        // cout << "pushed gate" << endl;;
 
         if (conn.contains("A")) {
           //  cout << "add A" << endl;
-            CG.addChild(in_1-offset, counter);
+            CG.addChild(in_1-offset, out - offset);
          //   cout << "added child A" << endl;
         }
         if( conn.contains("B")) {
-            CG.addChild(in_2-offset, counter);
+            CG.addChild(in_2-offset, out - offset);
           //  cout << "added child B" << endl;
         }       
 
@@ -208,7 +210,7 @@ int main(int argc, char** argv) {
 
          for (int j = 0; j < num_ciphertext; ++j)
             {
-                input_files.push_back(argv[++i]); // save the names of the input files
+              //  input_files.push_back(argv[++i]); // save the names of the input files
             }
 
            
@@ -282,6 +284,7 @@ int main(int argc, char** argv) {
     LweSample* temp;
 
     // read the ciphertexts
+    /*
     for (int i = 0; i<num_ciphertext; i++)
     {
         FILE* in = fopen(input_files[i], "rb");
@@ -294,7 +297,7 @@ int main(int argc, char** argv) {
         fclose(in);
     }
     cout << "read inputs" << endl;
-   
+   */
 
 
     //process jsonfile
@@ -325,7 +328,7 @@ int main(int argc, char** argv) {
     Evaluator evaluator;
 
     evaluator.init(&CG, cloud_key, params, input_registers);
-    evaluator.parallel_evaluate(k); // TODO
+    evaluator.parallel_evaluate(k); 
 
     cout << "evaluated" << endl;
 

@@ -53,19 +53,19 @@ inline std::string to_string(GATES gate){
 
 // struct that implements a gate
 struct Node{
-    int id; // must match position in gates vector
+    int id; // uniqure ide, must match position in gates vector
     GATES type;
     std::vector<int> parents;
     std::vector<int> children;
     int depth;  
     int collected; // -1 if not yet assigned to a subgraph, the index of the subgraph otherwise
-    int out; // for all inner nodes out = id but for nodes connected to output registers it is the output register id
+    int out; // output register 
 };  
 
 
 struct SubGraph{
     int id;
-    std::vector<int> gates;
+    std::vector<int> gates; // contains gate ids in executable order
     std::vector<int> inputs;
     std::vector<int> outputs;
     std::vector<int> dependencies;
@@ -81,7 +81,7 @@ class CircuitGraph
     {
 
     public: 
-    std::vector<Node> gates; // gates must always be in an order such that they can be executed
+    std::vector<Node> gates; 
     int input_length;
     int output_length;
     std::vector<SubGraph> subgraphs;
@@ -90,12 +90,16 @@ class CircuitGraph
 
     private:
     int bottom_layer;
+    int max_depth;
+    std::vector<int> executable_order_vector; // vector conatins gates in executable order, contains gate id
 
     public:
 
     CircuitGraph(int num_gates);
 
     CircuitGraph();
+
+    void resize(int num);
 
     void addChild(int id, int cildId);
 
@@ -109,13 +113,14 @@ class CircuitGraph
 
     void collect_remaining();
 
+    void executable_order();
+
     void write(std::string filename);
 
     void write_subgraphs(std::string file_prefix);
 
     void push_back_Gate(int id, GATES type, std::vector<int> parents, int out);
+    void set_gate(int id, GATES type, std::vector<int> parents, int out);
     };
-
-
 
 #endif //CIRCUITGRAPH_H
