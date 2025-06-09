@@ -39,7 +39,7 @@ void CircuitGraph::push_back_Gate(int id, GATES type, std::vector<int> parents, 
     node.id = id;
     node.type = type;
     node.parents = parents;
-    node.depth = 0;
+    node.depth = -1;
     node.collected = -1;
     node.out = out;
     gates.push_back(node);
@@ -53,8 +53,11 @@ void CircuitGraph::set_gate(int id, GATES type, std::vector<int> parents, int ou
     node.id = id;
     node.type = type;
     node.parents = parents;
-    node.depth = 0;
+    node.depth = -1;
     node.collected = -1;
+    if(type == GATES::INPUT){
+        node.collected = -2; // input gates are never collected
+    }
     node.out = out;
     gates[id] = node;
 }
@@ -64,27 +67,27 @@ void CircuitGraph::addChild(int id, int cildId){
 }
 
 void CircuitGraph::computeDepths(){
-    for(int i = 0; i < gates.size(); i++){
-        if(gates[i].type == GATES::INPUT || gates[i].type == GATES::OUTPUT){
-            gates[i].depth = -1; // not part of circuit 
-            gates[i].collected = -2; // don't collect ever
-            continue;
-        }
-        int depth = 0;
-        for(int j =  0; j < gates[i].parents.size(); j++){
-            int parentdepth = gates[gates[i].parents[j]].depth;
-            if ( parentdepth>= depth){
-                depth = parentdepth + 1;
-            }
-        }
-        gates[i].depth = depth;
-        if (depth > max_depth){
-            max_depth = depth;
-        }
-        if (depth == 0){
+    int depth = 0;
+    int max_depth = 0;
+    for(int i = 0; i < input_length; i++){
+        for(int c = 0; c < gates[i].children.size(); c++){
+            max_depth = propagateDepth(gates[i].children[c], depth);
             bottom_layer++;
         }
     }
+}
+
+int CircuitGraph::propagateDepth(int id, int depth){
+    if (max_depth < depth){
+        max_depth = depth;
+    }
+    if (gates[id].depth < depth){
+        gates[id].depth = depth;
+        for (int i = 0; i < gates[id].children.size(); i++){
+            max_depth = propagateDepth(gates[id].children[i], depth+1);
+        }
+    }
+    return max_depth;
 }
 
 bool CircuitGraph::isInOut(int id){
@@ -260,10 +263,10 @@ void CircuitGraph::collect_remaining(){
 void CircuitGraph::executable_order(){
     // brings gates into executable order by using their depth
     // input gates are not collected
-    for (int i = 0; i < max_depth; i++){
+    for (int i = 0; i <= max_depth; i++){
         for (int j = 0; j < gates.size(); j++){
             if (gates[j].depth == i){
-                executable_order_vector.push_back(j);
+                executable.push_back(j);
             }
         }
         

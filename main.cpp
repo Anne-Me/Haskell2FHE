@@ -88,15 +88,15 @@ void read_json_to_Circuit(string circuitpath, CircuitGraph &CG,int num_ciphertex
     }
     int num_gates = data["modules"]["topEntity"]["cells"].size();
 
-    cout << "input_length: " << input_length << " result_length: " << result_length << "\n";
+    cout << "input_length: " << input_length << " result_length: " << result_length << "gates: " << num_gates << endl;
     
     CG.input_length = input_length;
     CG.output_length = result_length;
-    CG.resize(input_length + result_length + num_gates);
+    CG.resize(input_length + num_gates);
 
     // add all the input registers and output registers
     for (int i = 0; i < input_length; i++) {
-        CG.set_gate(i, GATES::INPUT, {}, input_length);
+        CG.set_gate(i, GATES::INPUT, {}, i);
     }
     // for (int i = 0; i < result_length; i++) {
     //    CG.push_back_Gate(input_length + i, GATES::OUTPUT, {}, input_length+i); 
@@ -135,7 +135,7 @@ void read_json_to_Circuit(string circuitpath, CircuitGraph &CG,int num_ciphertex
          // Y is not giving us the child info but register to place otput
         if (conn.contains("Y")) {
             out = (int)conn["Y"][0];
-          //  cout << "output: " << out << endl;
+           // cout << "output: " << out << endl;
         }  
 
         CG.set_gate(out-offset, gate_type, parents, out-offset);
@@ -210,7 +210,7 @@ int main(int argc, char** argv) {
 
          for (int j = 0; j < num_ciphertext; ++j)
             {
-              //  input_files.push_back(argv[++i]); // save the names of the input files
+                input_files.push_back(argv[++i]); // save the names of the input files
             }
 
            
@@ -284,7 +284,7 @@ int main(int argc, char** argv) {
     LweSample* temp;
 
     // read the ciphertexts
-    /*
+    
     for (int i = 0; i<num_ciphertext; i++)
     {
         FILE* in = fopen(input_files[i], "rb");
@@ -297,7 +297,7 @@ int main(int argc, char** argv) {
         fclose(in);
     }
     cout << "read inputs" << endl;
-   */
+   
 
 
     //process jsonfile
@@ -306,9 +306,15 @@ int main(int argc, char** argv) {
     CircuitGraph CG;
     read_json_to_Circuit(circuitpath, CG, num_ciphertext);
     cout << "read circuit" << endl;
+    CG.computeDepths();
+    CG.executable_order();
+    for (int i = 0; i < CG.executable.size(); i++){
+    cout << CG.executable[i] << "depth: " << CG.gates[CG.executable[i]].depth<< " out: " << CG.gates[CG.executable[i]].out << ", ";
+    }
+    cout << endl;
+    
     
     if (k > 1){
-        CG.computeDepths();
         CG.defineSubgraphs(k);
         for (int i = 0; i < k; i++){
             cout << "subgraph " << i << " has " << CG.subgraphs[i].gates.size() << " gates" << endl;
@@ -322,8 +328,6 @@ int main(int argc, char** argv) {
 
         cout << "Splitting done" << endl;
     }
-
-
 
     Evaluator evaluator;
 

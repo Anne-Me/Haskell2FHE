@@ -85,13 +85,13 @@ class CircuitGraph
     int input_length;
     int output_length;
     std::vector<SubGraph> subgraphs;
+    std::vector<int> executable; // vector conatins gates in executable order, contains gate id
 
 
 
     private:
     int bottom_layer;
     int max_depth;
-    std::vector<int> executable_order_vector; // vector conatins gates in executable order, contains gate id
 
     public:
 
@@ -105,11 +105,7 @@ class CircuitGraph
 
     void computeDepths();
 
-    bool isInOut(int id);
-
     void defineSubgraphs(int);
-
-    bool collect_parents(std::stack<int> &parent_nodes, int current_node, int t);
 
     void collect_remaining();
 
@@ -121,6 +117,15 @@ class CircuitGraph
 
     void push_back_Gate(int id, GATES type, std::vector<int> parents, int out);
     void set_gate(int id, GATES type, std::vector<int> parents, int out);
+
+    private:
+
+    int propagateDepth(int id, int depth);
+
+    bool isInOut(int id);
+
+    bool collect_parents(std::stack<int> &parent_nodes, int current_node, int t);
+
     };
 
 #endif //CIRCUITGRAPH_H

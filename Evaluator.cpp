@@ -28,11 +28,18 @@ void Evaluator::init(CircuitGraph* CG, const TFheGateBootstrappingCloudKeySet* k
 void Evaluator::parallel_evaluate(int num_threads){
     if (CG->subgraphs.size() == 0 || num_threads == 1) {
     // do single threaded stuff
+    /*
         int first_gate = length_input + length_output; // first gate is the first working register
 
         for (int i = first_gate; i < CG->gates.size(); i++) {
             evaluate_gate(i);
             //cout << "evaluated gate: " << i << " of " << CG->gates.size() << " type " << to_string(CG->gates[i].type) << std::endl;
+        }
+        */
+        for(int i = 0; i < CG->executable.size(); i++){
+            int gate_id = CG->executable[i];
+            evaluate_gate(gate_id);
+            cout << "evaluated gate: " << gate_id << " of " << CG->executable.size() << " type " << to_string(CG->gates[gate_id].type) << std::endl;
         }
         cout << "done evaluating whole circuit." << std::endl;
         return;
