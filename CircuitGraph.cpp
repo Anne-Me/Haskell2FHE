@@ -59,6 +59,10 @@ void CircuitGraph::set_gate(int id, GATES type, std::vector<int> parents, int ou
         node.collected = -2; // input gates are never collected
     }
     node.out = out;
+
+    if (gates[id].children.size()>0){ // children could have been added before the gate itself is added
+        node.children = gates[id].children;
+    }
     gates[id] = node;
 }
 
