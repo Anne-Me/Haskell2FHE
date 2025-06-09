@@ -72,9 +72,14 @@ void CircuitGraph::computeDepths(){
     for(int i = 0; i < input_length; i++){
         for(int c = 0; c < gates[i].children.size(); c++){
             max_depth = propagateDepth(gates[i].children[c], depth);
+        }
+    }
+    for (int i = 0; i < gates.size(); i++){
+        if(gates[i].depth == 0){
             bottom_layer++;
         }
     }
+    cout << "Bottom layer: " << bottom_layer << endl;
 }
 
 int CircuitGraph::propagateDepth(int id, int depth){
@@ -107,7 +112,7 @@ void CircuitGraph::defineSubgraphs(int num_Threads){
 
     // select from the bottomlayer by picking every gapth gate
     //std::vector<SubGraph> subgraphs;
-    int skip = gap;
+    int skip = floor(gap/2); // alternative splitting: skip = gap
     int t = 0;
 
     for(int i = 0; i < gates.size(); i++){
@@ -268,10 +273,8 @@ void CircuitGraph::executable_order(){
             if (gates[j].depth == i){
                 executable.push_back(j);
             }
-        }
-        
+        }   
     }
-    
 }
 
 

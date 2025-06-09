@@ -164,7 +164,6 @@ void printerror(){
 
 int main(int argc, char** argv) {
 
-    auto begin = std::chrono::high_resolution_clock::now();
 
 
     if (argc == 1) {
@@ -308,9 +307,7 @@ int main(int argc, char** argv) {
     cout << "read circuit" << endl;
     CG.computeDepths();
     CG.executable_order();
-    for (int i = 0; i < CG.executable.size(); i++){
-    cout << CG.executable[i] << "depth: " << CG.gates[CG.executable[i]].depth<< " out: " << CG.gates[CG.executable[i]].out << ", ";
-    }
+    cout << "max depth " << CG.max_depth << " executable gates: " << CG.executable.size() << endl;
     cout << endl;
     
     
@@ -332,7 +329,15 @@ int main(int argc, char** argv) {
     Evaluator evaluator;
 
     evaluator.init(&CG, cloud_key, params, input_registers);
+    auto begin = std::chrono::high_resolution_clock::now();
+
     evaluator.parallel_evaluate(k); 
+    auto finish = std::chrono::high_resolution_clock::now();
+
+    auto interval = std::chrono::duration_cast<std::chrono::microseconds>(finish - begin).count();
+
+    double seconds = interval / 1000000;
+    double milliseconds = interval / 1000;
 
     cout << "evaluated" << endl;
 
@@ -352,15 +357,10 @@ int main(int argc, char** argv) {
 
     cout << "wrote output" << endl;
 
-     auto finish = std::chrono::high_resolution_clock::now();
-
-     auto interval = std::chrono::duration_cast<std::chrono::microseconds>(finish - begin).count();
-
-    double seconds = interval / 1000000;
-    double milliseconds = interval / 1000;
+   
 
 
-    std::cout << "Total execution time: "
+    std::cout << "Evaluation execution time: "
               << std::fixed << std::setprecision(6) << seconds << " seconds ("
               << std::fixed << std::setprecision(3) << milliseconds << " milliseconds)"
               << std::endl;

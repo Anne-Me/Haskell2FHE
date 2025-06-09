@@ -88,10 +88,10 @@ class CircuitGraph
     std::vector<int> executable; // vector conatins gates in executable order, contains gate id
 
 
+    int max_depth;
 
     private:
     int bottom_layer;
-    int max_depth;
 
     public:
 

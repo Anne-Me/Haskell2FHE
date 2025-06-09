@@ -39,7 +39,7 @@ void Evaluator::parallel_evaluate(int num_threads){
         for(int i = 0; i < CG->executable.size(); i++){
             int gate_id = CG->executable[i];
             evaluate_gate(gate_id);
-            cout << "evaluated gate: " << gate_id << " of " << CG->executable.size() << " type " << to_string(CG->gates[gate_id].type) << std::endl;
+          //  cout << "evaluated gate: " << gate_id << " of " << CG->executable.size() << " type " << to_string(CG->gates[gate_id].type) << std::endl;
         }
         cout << "done evaluating whole circuit." << std::endl;
         return;
