@@ -150,8 +150,9 @@ void read_bristol_to_Circuit(string circuitpath, CircuitGraph &CG){
     for (int i = 0; i < input_length; i++) {
         CG.set_gate(i, GATES::INPUT, {}, i);
     }
-    vector<int> parents;
+    
     for(int i = 0; i < num_gates; i++){
+        vector<int> parents;
         int num_in,num_out,in_1,in_2,out;
         f >> num_in;
         f >> num_out;
@@ -183,6 +184,14 @@ void read_bristol_to_Circuit(string circuitpath, CircuitGraph &CG){
         try
             {  
                 CG.set_gate(out, gate_type, parents, out);
+                /*
+                if (out % 20 == 0){
+                    cout << "set gate: " << out << " type: " << to_string(gate_type) << " parents " << CG.gates[out].parents[0];
+                    if(CG.gates[out].parents.size() > 1){
+                        cout  <<" " << CG.gates[out].parents[1] << endl;
+                    } else {cout << endl;}
+                    
+                }*/
             }
             catch(const std::exception& e)
             {                    
@@ -338,7 +347,8 @@ int main(int argc, char** argv) {
         CG.collect_remaining();
         cout << "remaining gates: " << CG.subgraphs[k].gates.size() << endl;
         if(print == true){
-            CG.write_subgraphs("splitPIR3ways"); 
+            //CG.write_subgraphs("splitPIR3ways"); 
+            cout << "no writing" << endl;
         }
 
         cout << "Splitting done" << endl;

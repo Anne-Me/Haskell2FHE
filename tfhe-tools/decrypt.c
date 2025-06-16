@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
+#include <inttypes.h>
 
 void print_error(const char *progname) {
     printf("Usage: decrypt %s -key <secret_keyfile> -b bits <ciphertext1.data> [<ciphertext2.data> ...]\n", progname);
@@ -82,13 +84,29 @@ int main(int argc, char *argv[]) {
         }
         fclose(ciphertext_file);
 
-        uint64_t plaintext = 0;
-        for (int j = 0; j < bits; j++) {
-            int bit = bootsSymDecrypt(&ciphertext[j], key);
-            plaintext |= ((uint64_t )bit << j);
-        }
+        if (bits <= 64){
+            uint64_t plaintext = 0;
+            for (int j = 0; j < bits; j++) {
+                int bit = bootsSymDecrypt(&ciphertext[j], key);
+                plaintext |= ((uint64_t )bit << j);
+            }
 
-        printf("Plaintext %d: %lu\n", i, plaintext);
+            printf("Plaintext %d: %lu\n", i, plaintext);
+        } else {
+            int chunks = bits/64;
+            //printf("chunks: %d \n", chunks);
+
+            for(int k = 0; k < chunks; k++){
+                uint64_t plaintext = 0;
+                for (int j = 0; j < 64; j++) {
+                    int bit = bootsSymDecrypt(&ciphertext[j+ k*64], key);
+                    plaintext |= ((uint64_t )bit << j);
+                }
+                printf("plaintext = 0x%016" PRIx64 "\n ", plaintext);
+            }
+            
+        }
+        
 
         delete_gate_bootstrapping_ciphertext_array(bits, ciphertext);
     }

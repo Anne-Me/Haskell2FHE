@@ -3,7 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <stdint.h>
+#include <inttypes.h>
 
 //function to encrypt a bit using secret key
 void encrypt_bit(LweSample* ciphertext, int bit, TFheGateBootstrappingSecretKeySet* key) {
@@ -30,12 +31,12 @@ int main(int argc, char *argv[]) {
 
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-n") == 0) {
+            n = atoi(argv[i + 1]);
             if (i + n >= argc) {
                 fprintf(stderr, "Error: `-n` requires n messages.\n");
                 print_error(argv[0]);
                 return 0;
             }
-            n = atoi(argv[i + 1]);
             if (n < 0) {
                 fprintf(stderr, "Error: Invalid number for `-n`: %s\n", argv[i + 1]);
                 return 0;
@@ -88,29 +89,78 @@ int main(int argc, char *argv[]) {
 
     if (n > 0) {
         for (int i = 0; i < n; i++) {
-            uint64_t plaintext = strtoull(argv[3 + i], NULL,10);
-            LweSample *ciphertext = new_gate_bootstrapping_ciphertext_array(b, params);
+            if(b<=64){
+                uint64_t plaintext = strtoull(argv[3 + i], NULL,10);
+                LweSample *ciphertext = new_gate_bootstrapping_ciphertext_array(b, params);
 
-            for (int j = 0; j < b; j++) {
-                int bit = (plaintext >> j) & 1;
-                encrypt_bit(&ciphertext[j], bit, sk);
+                for (int j = 0; j < b; j++) {
+                    int bit = (plaintext >> j) & 1;
+                    encrypt_bit(&ciphertext[j], bit, sk);
+                }
+
+                char filename[256];
+                sprintf(filename, "ciphertext%d.data", i);
+                FILE *ciphertext_file = fopen(filename, "wb");
+                if (ciphertext_file == NULL) {
+                    perror("Failed to open ciphertext file");
+                    return 1;
+                }
+
+                for (int j = 0; j < b; j++) {
+                    export_gate_bootstrapping_ciphertext_toFile(ciphertext_file, &ciphertext[j], params);
+                }
+
+                fclose(ciphertext_file);
+
+                delete_gate_bootstrapping_ciphertext_array(b, ciphertext);
+            } else { // if b > 64 then input is expected in hex
+                char *hexStr = argv[3 + i];
+                if ((hexStr[0] == '0') && (hexStr[1] == 'x' || hexStr[1] == 'X')) {
+                    hexStr += 2;
+                }
+                size_t len = strlen(hexStr);
+                size_t chunks = (len + 15) / 16;
+                size_t totalLen = chunks * 16;
+                if(totalLen != len) {
+                    fprintf(stderr, "Error: Hexadecimal input must be a multiple of 16 characters.\n");
+                    return 1;
+                }
+                uint64_t *hexValues = malloc(chunks * sizeof(uint64_t));
+                for (int j = 0; j < chunks; ++j) {
+                    char buf[17] = {0};
+                    memcpy(buf, hexStr+ j * 16, 16);
+                    uint64_t v = strtoull(buf, NULL, 16);
+                    hexValues[j] = v;
+                    printf("Chunk %d: 0x%016" PRIx64 " (%" PRIu64 ")\n", j, v, v);
+                }
+                for (int j = 1; j <= chunks; ++j) {
+                    LweSample *ciphertext = new_gate_bootstrapping_ciphertext_array(b, params);
+                    uint64_t plaintext = hexValues[chunks-j]; // start with last chunk to preserve LSB ordering
+                    printf("Encrypting = 0x%016" PRIx64 "\n", plaintext);
+                    for (int k = 0; k < 64; k++) {
+                        int bit = (plaintext >> k) & 1;
+                        encrypt_bit(&ciphertext[k], bit, sk);
+                    }
+
+                    char filename[256];
+                    sprintf(filename, "ciphertext%d_%d.data", i,j);
+                    FILE *ciphertext_file = fopen(filename, "wb");
+                    if (ciphertext_file == NULL) {
+                        perror("Failed to open ciphertext file");
+                        return 1;
+                    }
+
+                    for (int j = 0; j < b; j++) {
+                        export_gate_bootstrapping_ciphertext_toFile(ciphertext_file, &ciphertext[j], params);
+                    }
+
+                    fclose(ciphertext_file);
+
+                    delete_gate_bootstrapping_ciphertext_array(b, ciphertext);
+                        
+                }
+                free(hexValues);
             }
-
-            char filename[256];
-            sprintf(filename, "ciphertext%d.data", i);
-            FILE *ciphertext_file = fopen(filename, "wb");
-            if (ciphertext_file == NULL) {
-                perror("Failed to open ciphertext file");
-                return 1;
-            }
-
-            for (int j = 0; j < b; j++) {
-                export_gate_bootstrapping_ciphertext_toFile(ciphertext_file, &ciphertext[j], params);
-            }
-
-            fclose(ciphertext_file);
-
-            delete_gate_bootstrapping_ciphertext_array(b, ciphertext);
         }
     }
 
