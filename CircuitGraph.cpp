@@ -86,6 +86,13 @@ void CircuitGraph::computeDepths(){
     cout << "Bottom layer: " << bottom_layer << endl;
 }
 
+bool CircuitGraph::identify_output(int id){
+    if (gates[id].children.size() == 0){ // not good, output gate could still be used for other gate
+        return true;
+    }
+    return false;
+}
+
 int CircuitGraph::propagateDepth(int id, int depth){
     if (max_depth < depth){
         max_depth = depth;
@@ -195,6 +202,113 @@ void CircuitGraph::defineSubgraphs(int num_Threads){
                     subgraphs[t].head_child = 0;
                 } 
             } 
+        }
+        // check if all subgraphs are closed
+        all_done = true;
+        for(int t = 0; t < subgraphs.size(); t ++ ){
+            if(subgraphs[t].closed == false){
+                all_done = false;
+            }
+        }
+    }
+}
+
+
+void CircuitGraph::defineSubgraphs_test(int num_Threads){
+    int gap = floor(bottom_layer / num_Threads);
+    cout << "gap: " << gap << endl;
+    if (gap < 1){
+        cerr << "more threads than bottom layer gates??" << endl;
+        return;
+    }
+
+    // select from the bottomlayer by picking every gapth gate
+    //std::vector<SubGraph> subgraphs;
+    int skip = floor(gap/2); // alternative splitting: skip = gap
+    int t = 0;
+
+    for(int i = 0; i < gates.size(); i++){
+        if(gates[i].depth == 0){
+            if (skip < gap){
+                skip++;
+            } else {
+                SubGraph sg = {t,vector<int>{i},vector<int>{},vector<int>{},vector<int>{}, false, 0,0};
+                subgraphs.push_back(sg);
+                gates[i].collected = t;
+                t++;
+                skip = 0;
+            }
+        }
+    }
+
+    cout << "t: " << t  << "subgraphs.size " << subgraphs.size() << endl;
+    cout << "initial gates: ";
+    for (int t = 0; t < subgraphs.size(); t++){
+        cout << subgraphs[t].gates[0] << ", ";
+    }
+    cout << endl;
+
+    // go around the starting points and collect connected gates, taking turns to make the subgraphs evenly sized
+    std::vector<int> closed_subgraphs;
+    bool all_done = false;
+    while(!all_done){
+        for(int t = 0; t < subgraphs.size(); t++){
+            if (subgraphs[t].closed){continue;}
+            bool added_nodes = false;
+            
+            while(!added_nodes){ // keep trying to expand subgraph t until something was found
+                int latest_node = subgraphs[t].gates[subgraphs[t].head];
+                int latest_node_child_counter = subgraphs[t].head_child; 
+                int latest_node_child_node = 0;
+                bool success;
+                if (gates[latest_node].children.size() != 0){ // else it is a output node (no children)
+                    latest_node_child_node = gates[latest_node].children[latest_node_child_counter];
+                    stack<int> parent_nodes;
+                    success = collect_parents(parent_nodes, latest_node_child_node, t); 
+            //      cout << "success for node " << latest_node_child_node << "+" << success << endl;
+                    if(success){
+                        // add all nodes to subgraph
+                        added_nodes = true;
+                        while(parent_nodes.size() > 0){
+                            int p = parent_nodes.top();
+                            parent_nodes.pop();
+                            subgraphs[t].gates.push_back(p);
+                        }
+                    } else {
+                        // purge all from the stack set explored to -1 only if it was this subgraph
+                        while(parent_nodes.size() > 0){
+                            int p = parent_nodes.top();
+                            parent_nodes.pop();
+                            if(gates[p].collected == t){ // only uncollect if it is not claimed by another subgraph
+                                gates[p].collected = -1;
+                            }
+                        }
+                    }
+                } else {
+                    success = false;
+                }
+                if (gates[latest_node].children.size() > 0 && latest_node_child_counter < (gates[latest_node].children.size()-1)){
+                    // advance child counter for current node
+                    subgraphs[t].head_child++;
+                } else { // all children from this node are explored
+                    // advance head since this node is completed
+                    if (!success && subgraphs[t].head == (subgraphs[t].gates.size()-1)){
+                        subgraphs[t].closed = true;
+                        added_nodes = true; // terminate loop
+                    // cout << "subgraph" << t << " closed," << subgraphs[t].gates.size() << " gates" << endl;
+                    } else if (success && subgraphs[t].head == (subgraphs[t].gates.size()-1)){
+                        cout << "ERROR: sucessful finding of children but also no furhter gates? " << endl;
+                        return;
+                    } else { // can sucess be true even if no new gates were added?
+                        subgraphs[t].head++;
+                        subgraphs[t].head_child = 0;
+                    } 
+                }
+            }
+            
+            
+            
+             
         }
         // check if all subgraphs are closed
         all_done = true;

@@ -32,6 +32,7 @@ public:
     void evaluate_gate(int gate_id);
     LweSample* find_register(int id);
 
+    void move_outputs();
 };
 
 

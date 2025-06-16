@@ -16,8 +16,11 @@ enum GATES{
     ANDYN,
     NOT,
     ORYN,
+    MUX,
     INPUT,
-    OUTPUT
+    OUTPUT,
+    CONST,
+    CONSTW
 };
 
 inline GATES convert(std::string gate_str){
@@ -30,6 +33,12 @@ inline GATES convert(std::string gate_str){
     else if(gate_str == "$_NOR_") return NOR;
     else if(gate_str == "$_NOT_") return NOT;
     else if(gate_str == "$_ORNOT_") return ORYN;
+    else if(gate_str == "$_MUX_") return MUX;
+    else if(gate_str == "AND") return AND;
+    else if(gate_str == "XOR") return XOR;
+    else if(gate_str == "INV") return NOT;
+    else if(gate_str == "EQ") return CONST;
+    else if(gate_str == "EQW") return CONSTW;
     else throw std::invalid_argument("unknown gate " + gate_str);
 }
 
@@ -46,6 +55,19 @@ inline std::string to_string(GATES gate){
         case ORYN: return "$_ORNOT_";
         case INPUT: return "INPUT";
         case OUTPUT: return "OUTPUT";
+        case MUX: return "$_MUX_";
+        default: throw std::invalid_argument("unknown gate");
+    }
+}
+
+inline std::string to_string_bristol(GATES gate){
+    switch (gate){
+        case AND: return "AND";
+        case XOR: return "XOR";
+        case NOT: return "INV";
+        case INPUT: return "INPUT";
+        case CONST: return "EQ";
+        case CONSTW: return "EQW";
         default: throw std::invalid_argument("unknown gate");
     }
 }
@@ -107,6 +129,8 @@ class CircuitGraph
 
     void defineSubgraphs(int);
 
+    void defineSubgraphs_test(int num_Threads);
+
     void collect_remaining();
 
     void executable_order();
@@ -117,6 +141,7 @@ class CircuitGraph
 
     void push_back_Gate(int id, GATES type, std::vector<int> parents, int out);
     void set_gate(int id, GATES type, std::vector<int> parents, int out);
+    bool identify_output(int id);
 
     private:
 

@@ -39,7 +39,7 @@ void Evaluator::parallel_evaluate(int num_threads){
         for(int i = 0; i < CG->executable.size(); i++){
             int gate_id = CG->executable[i];
             evaluate_gate(gate_id);
-          //  cout << "evaluated gate: " << gate_id << " of " << CG->executable.size() << " type " << to_string(CG->gates[gate_id].type) << std::endl;
+            cout << "evaluated gate: " << gate_id << " of " << CG->executable.size() << " type " << to_string(CG->gates[gate_id].type) << std::endl;
         }
         cout << "done evaluating whole circuit." << std::endl;
         return;
@@ -145,6 +145,9 @@ void Evaluator::evaluate_gate(int gate_id) {
                 bootsORYN(find_register(ct_out), find_register(ct_ipA), find_register(ct_ipB), bk);
                 break;
             }
+            case MUX: {
+                break;
+            }
             default: {
                 cout << "gate type: " << to_string(gate) << endl;
             }
@@ -165,5 +168,18 @@ LweSample * Evaluator::find_register(int id) {
         return &working_registers[id - length_input - length_output];
     } else {
         throw std::invalid_argument("index outside of registers");
+    }
+}
+
+void Evaluator::move_outputs(){
+    int counter = 0;
+    for(int i = 0; i < CG->gates.size(); i++){
+        if(CG->identify_output(i)){
+            if (counter > length_output) {
+                throw std::out_of_range("More output registers than expected");
+            }
+            bootsCOPY(find_register(counter+length_input),find_register(i), bk);
+            counter++;
+        }
     }
 }

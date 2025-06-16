@@ -19,49 +19,10 @@ using namespace std;
 using json = nlohmann::json;
 
 
-
-/*
-reads json file and creates json output
-*/
-void read_json(string circuitpath, json& out, int num_ciphertext){
-    ifstream f(circuitpath);
-    json data = json::parse(f);
-
-    int input_length=0;
-    input_length =  data["modules"]["topEntity"]["ports"]["c$arg"]["bits"].size();     //length of the first input 
-    for (int i = 0; i<num_ciphertext-1; i++) {
-        input_length +=  data["modules"]["topEntity"]["ports"]["c$arg_"+to_string(i)]["bits"].size();  // length of whole input
-    }
-
-
-
-    int result_length =  data["modules"]["topEntity"]["ports"]["result"]["bits"].size();  // length of result
-
-    cout << "input_length: " << input_length << " result_length: " << result_length << "\n";
-    
-    out["data"]["inputlength"] = input_length;
-    out["data"]["resultlength"] = result_length;
-
-
-    int counter =0;
-    
-
-    for (auto el : data["modules"]["topEntity"]["cells"].items())
-    {
-        string key = el.key();
-        json conn = el.value()["connections"];
-        string type = el.value()["type"];
-
-
-        json info = {{"type", el.value()["type"]},{"inputA", el.value()["connections"]["A"][0]}, {"inputB", el.value()["connections"]["B"][0]}, {"output", el.value()["connections"]["Y"][0]}};   //from here, we can calculate largest value of working resigter op
-        out["gates"].push_back({{"cells"+to_string(++counter), info}});         
-    }
-}
-
 /*
 reads json file and parses into CircuitGraph 
 */
-void read_json_to_Circuit(string circuitpath, CircuitGraph &CG,int num_ciphertext){
+void read_json_to_Circuit(string circuitpath, CircuitGraph &CG){
     ifstream f(circuitpath);
     if (!f.is_open()) {
         throw std::runtime_error("Failed to open circuit file: " + circuitpath);
@@ -69,39 +30,30 @@ void read_json_to_Circuit(string circuitpath, CircuitGraph &CG,int num_ciphertex
     json data = json::parse(f);
 
     int input_length=0;
-    input_length =  data["modules"]["topEntity"]["ports"]["c$arg"]["bits"].size();     //length of the first input 
-    for (int i = 0; i<num_ciphertext-1; i++) {
-        input_length +=  data["modules"]["topEntity"]["ports"]["c$arg_"+to_string(i)]["bits"].size();  // length of whole input
-    }
+    int result_length = 0;
 
-    int temp_result_length = data["modules"]["topEntity"]["ports"]["result"]["bits"].size(); 
-    int result_length =  0;
-    for (int i = 0; i < temp_result_length; i++){
-        try
-        {
-            if ((int)data["modules"]["topEntity"]["ports"]["result"]["bits"][i] != 0){
-                result_length++;
-            }
-        }catch(const std::exception& e){
-            continue;
+    for (auto el : data["modules"]["topEntity"]["ports"].items()){
+        if(el.value()["direction"] == "input"){
+            input_length +=  el.value()["bits"].size();
+        } else if(el.value()["direction"] == "output"){
+            result_length +=  el.value()["bits"].size();
+        } else {
+            cout << "Unknoen port type: " << el.value()["direction"] << endl;
         }
     }
+
     int num_gates = data["modules"]["topEntity"]["cells"].size();
 
-    cout << "input_length: " << input_length << " result_length: " << result_length << "gates: " << num_gates << endl;
+    cout << "input_length: " << input_length << " result_length: " << result_length << " gates: " << num_gates << endl;
     
     CG.input_length = input_length;
     CG.output_length = result_length;
     CG.resize(input_length + num_gates);
 
-    // add all the input registers and output registers
+    // add all the input registers 
     for (int i = 0; i < input_length; i++) {
         CG.set_gate(i, GATES::INPUT, {}, i);
     }
-    // for (int i = 0; i < result_length; i++) {
-    //    CG.push_back_Gate(input_length + i, GATES::OUTPUT, {}, input_length+i); 
-    //}
-
 
     int counter = input_length+result_length; 
     int offset = 2; // why yosys
@@ -112,7 +64,7 @@ void read_json_to_Circuit(string circuitpath, CircuitGraph &CG,int num_ciphertex
         string type = el.value()["type"];
    
         GATES gate_type = convert(type);
-      //  cout << "gate type: " << to_string(gate_type) << "counter: " << counter << endl;
+        //cout << "gate type: " << to_string(gate_type) << "counter: " << counter << endl;
 
         vector<int> parents;
         int in_1;
@@ -137,8 +89,17 @@ void read_json_to_Circuit(string circuitpath, CircuitGraph &CG,int num_ciphertex
             out = (int)conn["Y"][0];
            // cout << "output: " << out << endl;
         }  
-
+        try
+        {  
         CG.set_gate(out-offset, gate_type, parents, out-offset);
+        }
+        catch(const std::exception& e)
+        {
+            cout << "Error while setting gate: " << out-offset << endl;
+            cout << "A" << in_1-offset << " B: " << in_2-offset << " out: " << out-offset << endl;
+            std::cerr << e.what() << '\n';
+        }
+        
        // cout << "pushed gate" << endl;;
 
         if (conn.contains("A")) {
@@ -154,6 +115,82 @@ void read_json_to_Circuit(string circuitpath, CircuitGraph &CG,int num_ciphertex
         counter++;
     }
 
+}
+
+void read_bristol_to_Circuit(string circuitpath, CircuitGraph &CG){
+    ifstream f(circuitpath);
+    if (!f.is_open()) {
+        throw std::runtime_error("Failed to open circuit file: " + circuitpath);
+    }
+    int num_gates, num_wires;
+    f >> num_gates >> num_wires;
+
+    int input_length = 0;
+    int num_inputs = 0;
+    int output_length = 0;
+    int num_outputs = 0;
+    int temp;
+    f >> num_inputs;
+    for (int i = 0; i < num_inputs; i++){
+        f >> temp;
+        input_length += temp;
+    }
+    f >> num_outputs;
+    for (int i = 0; i < num_outputs; i++){
+        f >> temp;
+        output_length += temp;
+    }
+
+    cout << "input_length: " << input_length << " result_length: " << output_length << " gates: " << num_gates << endl;
+
+    CG.input_length = input_length;
+    CG.output_length = output_length;
+    CG.resize(input_length + num_gates);
+
+    for (int i = 0; i < input_length; i++) {
+        CG.set_gate(i, GATES::INPUT, {}, i);
+    }
+    vector<int> parents;
+    for(int i = 0; i < num_gates; i++){
+        int num_in,num_out,in_1,in_2,out;
+        f >> num_in;
+        f >> num_out;
+        if(num_in == 1){
+            f >> in_1;
+            parents.push_back(in_1);
+        } else if (num_in == 2){
+            f >> in_1;
+            f >> in_2;
+            parents.push_back(in_1);
+            parents.push_back(in_2);
+        } else {
+            throw std::runtime_error("Invalid number of inwires. For MAND gates please transform to AND gates first.");
+        }
+        if(num_out == 1){
+            f >> out;
+            CG.addChild(in_1, out); 
+            if(num_in == 2){
+                CG.addChild(in_2, out);
+            }
+        } else {
+            throw std::runtime_error("Invalid number of outwires.");
+        }
+
+        string type;
+        f >> type;
+        GATES gate_type = convert(type);
+
+        try
+            {  
+                CG.set_gate(out, gate_type, parents, out);
+            }
+            catch(const std::exception& e)
+            {                    
+                cout << "Error while setting gate: " << out << endl;
+                cout << "A" << in_1 << " B: " << in_2 << " out: " << out << endl;
+                std::cerr << e.what() << '\n';
+            }
+        }
 }
 
 void printerror(){
@@ -182,23 +219,31 @@ int main(int argc, char** argv) {
     char* cloud_key_filename;
 
     bool print = false;
+    bool eval = true;
+    string format = "json"; 
 
     for (int i = 1; i < argc; ++i)
     {
-        if (string("-c") == argv[i])
-        {
-            if (argc <= i + 1)
-            {
+        if (string("-c") == argv[i]){
+            if (argc <= i + 1){
                 printerror();
                 return -1;
             }
+            format = "json";
+            circuitpath = string(argv[++i]);
+        }
 
+        if (string("-cbristol") == argv[i]){
+            if (argc <= i + 1){
+                printerror();
+                return -1;
+            }
+            format = "bristol";
             circuitpath = string(argv[++i]);
         }
         
 
-        else if (string("-n")==argv[i])
-        {
+        else if (string("-n")==argv[i]){
             if (argc <= i + 1)
             {
                 printerror();
@@ -207,20 +252,15 @@ int main(int argc, char** argv) {
 
         num_ciphertext=std::stoi(argv[++i]);
 
-         for (int j = 0; j < num_ciphertext; ++j)
-            {
+         for (int j = 0; j < num_ciphertext; ++j){
                 input_files.push_back(argv[++i]); // save the names of the input files
             }
-
-           
         }
         else if (string("-out") == argv[i] ){
-            if (argc <= i + 1)
-            {
+            if (argc <= i + 1){
                 printerror();
                 return -1;
             }
-
             out_file = argv[++i]; 
         }
        
@@ -257,14 +297,56 @@ int main(int argc, char** argv) {
             return 0;
         } else if (string("-print") == argv[i]){
             print = true;
-        } else {
+        } else if (string("-noeval") == argv[i]){
+            eval = false;
+            print = true;
+        }      
+        else {
             std::cerr << "Unknown argument: " << argv[i] << std::endl;
             printerror();
             return -1;
         }
     }
+   
+    //process circuit
+
+    CircuitGraph CG;
+    if (format == "json"){
+        read_json_to_Circuit(circuitpath, CG);
+        cout << "read circuit" << endl;
+    } else if (format == "bristol"){
+        read_bristol_to_Circuit(circuitpath, CG);
+        cout << "read circuit" << endl;
+    } else {
+        cerr << "Unknown format" << endl;
+        return -1;
+    }
 
 
+    CG.computeDepths();
+    CG.executable_order();
+    cout << "max depth " << CG.max_depth << " executable gates: " << CG.executable.size() << endl;
+    cout << endl;
+    
+    
+    if (k > 1){
+        CG.defineSubgraphs_test(k);
+        for (int i = 0; i < k; i++){
+            cout << "subgraph " << i << " has " << CG.subgraphs[i].gates.size() << " gates" << endl;
+        }
+
+        CG.collect_remaining();
+        cout << "remaining gates: " << CG.subgraphs[k].gates.size() << endl;
+        if(print == true){
+            CG.write_subgraphs("splitPIR3ways"); 
+        }
+
+        cout << "Splitting done" << endl;
+    }
+    if (!eval) {
+        cout << "Not evaluating, exit" << endl;
+        return 0;
+    }
 
     // Read the cloud key from file
     FILE *cloud_key_file = fopen(cloud_key_filename, "rb");
@@ -282,8 +364,7 @@ int main(int argc, char** argv) {
 
     LweSample* temp;
 
-    // read the ciphertexts
-    
+         // read the ciphertexts
     for (int i = 0; i<num_ciphertext; i++)
     {
         FILE* in = fopen(input_files[i], "rb");
@@ -298,34 +379,7 @@ int main(int argc, char** argv) {
     cout << "read inputs" << endl;
    
 
-
-    //process jsonfile
-    json out;
-    //read_json(circuitpath, out, num_ciphertext);
-    CircuitGraph CG;
-    read_json_to_Circuit(circuitpath, CG, num_ciphertext);
-    cout << "read circuit" << endl;
-    CG.computeDepths();
-    CG.executable_order();
-    cout << "max depth " << CG.max_depth << " executable gates: " << CG.executable.size() << endl;
-    cout << endl;
     
-    
-    if (k > 1){
-        CG.defineSubgraphs(k);
-        for (int i = 0; i < k; i++){
-            cout << "subgraph " << i << " has " << CG.subgraphs[i].gates.size() << " gates" << endl;
-        }
-
-        CG.collect_remaining();
-        cout << "remaining gates: " << CG.subgraphs[k].gates.size() << endl;
-        if(print == true){
-            CG.write_subgraphs("splitPIR3ways"); 
-        }
-
-        cout << "Splitting done" << endl;
-    }
-
     Evaluator evaluator;
 
     evaluator.init(&CG, cloud_key, params, input_registers);
@@ -349,9 +403,21 @@ int main(int argc, char** argv) {
     }
     int resultlength = CG.output_length;
 
+    /*if(format == "bristol"){
+        evaluator.move_outputs();
+    }*/
 
-    for (int j = 0; j < resultlength; j++) { 
-        export_gate_bootstrapping_ciphertext_toFile(ciphertext_file, &evaluator.output_registers[j], params);
+    cout << CG.output_length << " output length " << CG.gates.size() << "gates.size" << endl;
+    if (format == "bristol") { // output gates are the last registers
+        int first_gate = CG.gates.size() - CG.output_length; 
+        int eval_first_gate = evaluator.length_working - evaluator.length_output; // first gate is the first working register
+        for (int j = 0; j < resultlength; j++) {             
+            export_gate_bootstrapping_ciphertext_toFile(ciphertext_file, &evaluator.working_registers[eval_first_gate + j], params);
+        }
+    } else if (format == "json"){ // output gates are the first registers after input
+        for (int j = 0; j < resultlength; j++) { 
+            export_gate_bootstrapping_ciphertext_toFile(ciphertext_file, &evaluator.output_registers[j], params);
+        }
     }
     fclose(ciphertext_file);
 
