@@ -240,9 +240,10 @@ int main(int argc, char** argv) {
             }
             format = "json";
             circuitpath = string(argv[++i]);
+            cout << "circuit path: " << circuitpath << endl;
         }
 
-        if (string("-cbristol") == argv[i]){
+        else if (string("-cbristol") == argv[i]){
             if (argc <= i + 1){
                 printerror();
                 return -1;
@@ -308,7 +309,6 @@ int main(int argc, char** argv) {
             print = true;
         } else if (string("-noeval") == argv[i]){
             eval = false;
-            print = true;
         }      
         else {
             std::cerr << "Unknown argument: " << argv[i] << std::endl;
@@ -361,7 +361,7 @@ int main(int argc, char** argv) {
     // Read the cloud key from file
     FILE *cloud_key_file = fopen(cloud_key_filename, "rb");
     if (cloud_key_file == NULL) {
-        perror("No cloud is given");
+        perror("No bootstrapping key is given");
         return 1;
     }
 

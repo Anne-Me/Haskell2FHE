@@ -96,13 +96,13 @@ int main(int argc, char *argv[]) {
             int chunks = bits/64;
             //printf("chunks: %d \n", chunks);
 
-            for(int k = 0; k < chunks; k++){
+            for(int k = chunks-1; k >=0 ; k--){
                 uint64_t plaintext = 0;
                 for (int j = 0; j < 64; j++) {
                     int bit = bootsSymDecrypt(&ciphertext[j+ k*64], key);
                     plaintext |= ((uint64_t )bit << j);
                 }
-                printf("plaintext = 0x%016" PRIx64 "\n ", plaintext);
+                printf("part %d = 0x%016" PRIx64 "\n", chunks-k, plaintext);
             }
             
         }
