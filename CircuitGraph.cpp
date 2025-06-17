@@ -86,6 +86,23 @@ void CircuitGraph::computeDepths(){
     cout << "Bottom layer: " << bottom_layer << endl;
 }
 
+void CircuitGraph::recomputeDepths(){
+   int remaining = subgraphs[subgraphs.size()-1].gates.size();
+    for (int i = 0; i < remaining; i++){
+          int id = subgraphs[subgraphs.size()-1].gates[i];
+          gates[id].depth = 0; // reset depth
+          gates[id].collected = -1; // reset collected
+     }
+     int max_depth = 0;
+     for (int i = 0; i < remaining; i++){
+          int id = subgraphs[subgraphs.size()-1].gates[i];
+          for (int c = 0; c < gates[id].children.size(); c++){
+                max_depth = propagateDepth(gates[id].children[c], 0);
+          }
+     }
+     cout << "remaining max depth: " << max_depth << endl;
+}
+
 bool CircuitGraph::identify_output(int id){
     if (gates[id].children.size() == 0){ // not good, output gate could still be used for other gate
         return true;
@@ -106,47 +123,15 @@ int CircuitGraph::propagateDepth(int id, int depth){
     return max_depth;
 }
 
-bool CircuitGraph::isInOut(int id){
-    if (gates[id].collected == -2){
+bool CircuitGraph::isInput(int id){
+    if (gates[id].type == GATES::INPUT){ // used to be collected == -2
         return true;
     }
     return false;
 }
 
-void CircuitGraph::defineSubgraphs(int num_Threads){
-    int gap = floor(bottom_layer / num_Threads);
-    cout << "gap: " << gap << endl;
-    if (gap < 1){
-        cerr << "more threads than bottom layer gates??" << endl;
-        return;
-    }
-
-    // select from the bottomlayer by picking every gapth gate
-    //std::vector<SubGraph> subgraphs;
-    int skip = floor(gap/2); // alternative splitting: skip = gap
-    int t = 0;
-
-    for(int i = 0; i < gates.size(); i++){
-        if(gates[i].depth == 0){
-            if (skip < gap){
-                skip++;
-            } else {
-                SubGraph sg = {t,vector<int>{i},vector<int>{},vector<int>{},vector<int>{}, false, 0,0};
-                subgraphs.push_back(sg);
-                gates[i].collected = t;
-                t++;
-                skip = 0;
-            }
-        }
-    }
-
-    cout << "t: " << t  << "subgraphs.size " << subgraphs.size() << endl;
-    cout << "initial gates: ";
-    for (int t = 0; t < subgraphs.size(); t++){
-        cout << subgraphs[t].gates[0] << ", ";
-    }
-    cout << endl;
-
+void CircuitGraph::defineSubgraphs(int num_Threads, int previous){
+    init_subgraphs(num_Threads,previous);
 
     // go around the starting points and collect connected gates, taking turns to make the subgraphs evenly sized
 
@@ -162,7 +147,7 @@ void CircuitGraph::defineSubgraphs(int num_Threads){
             if (gates[latest_node].children.size() != 0){ // else it is a output node (no children)
                 latest_node_child_node = gates[latest_node].children[latest_node_child_counter];
                 stack<int> parent_nodes;
-                success = collect_parents(parent_nodes, latest_node_child_node, t); 
+                success = collect_parents(parent_nodes, latest_node_child_node, t,0); 
           //      cout << "success for node " << latest_node_child_node << "+" << success << endl;
                 if(success){
                     // add all nodes to subgraph
@@ -213,9 +198,8 @@ void CircuitGraph::defineSubgraphs(int num_Threads){
     }
 }
 
-
-void CircuitGraph::defineSubgraphs_test(int num_Threads){
-    int gap = floor(bottom_layer / num_Threads);
+void CircuitGraph::init_subgraphs(int num_Threads, int previous){
+    float gap = (float)bottom_layer / num_Threads;
     cout << "gap: " << gap << endl;
     if (gap < 1){
         cerr << "more threads than bottom layer gates??" << endl;
@@ -224,30 +208,67 @@ void CircuitGraph::defineSubgraphs_test(int num_Threads){
 
     // select from the bottomlayer by picking every gapth gate
     //std::vector<SubGraph> subgraphs;
-    int skip = floor(gap/2); // alternative splitting: skip = gap
     int t = 0;
+    float nextfloat = (t+1)*gap;
+    int next = floor((t+1)*gap); // alternative splitting: skip = gap
+    cout << "nextfloat " << nextfloat << "next " << next << endl;
+    int skip = 1;
+    if(previous == 0){
+        for(int i = 0; i < gates.size(); i++){
+            if(gates[i].depth == 0){
 
-    for(int i = 0; i < gates.size(); i++){
-        if(gates[i].depth == 0){
-            if (skip < gap){
-                skip++;
-            } else {
-                SubGraph sg = {t,vector<int>{i},vector<int>{},vector<int>{},vector<int>{}, false, 0,0};
-                subgraphs.push_back(sg);
-                gates[i].collected = t;
-                t++;
-                skip = 0;
+            //cout << "skip: " << skip << "next: " << next << endl;
+                if (skip < next){
+                    skip++;
+                } else {
+                    SubGraph sg = {t,vector<int>{i},vector<int>{},vector<int>{},vector<int>{}, false, 0,0};
+                    subgraphs.push_back(sg);
+                    gates[i].collected = t;
+                    t++;
+                    skip++;
+                    float nextfloat = (t+1)*gap;
+
+                    next = floor((t+1)*gap);
+                    //cout << "nextfloat " << nextfloat << "next " << next << endl;
+                    //skip = 0;
+                }
+            }
+        }
+    } else {
+        SubGraph last =  subgraphs[previous];
+        subgraphs.pop_back();
+        for (int i = 0; i < last.gates.size(); i++)
+        {
+           if(gates[last.gates[i]].depth == 0){
+                if (skip < gap){
+                    skip++;
+                } else {
+                    SubGraph sg = {t+previous,vector<int>{last.gates[i]},vector<int>{},vector<int>{},vector<int>{}, false, 0,0};
+                    subgraphs.push_back(sg);
+                    gates[last.gates[i]].collected = t+previous;
+                    t++;
+                    skip = 0;
+                }
             }
         }
     }
 
     cout << "t: " << t  << "subgraphs.size " << subgraphs.size() << endl;
     cout << "initial gates: ";
-    for (int t = 0; t < subgraphs.size(); t++){
+    for (int t = previous; t < subgraphs.size(); t++){
         cout << subgraphs[t].gates[0] << ", ";
     }
     cout << endl;
 
+}
+
+void CircuitGraph::defineSubgraphs_test(int num_Threads, int previous){
+    SubGraph previous_remain;
+    if(previous > 0){
+        previous_remain = subgraphs[previous];
+    }
+    init_subgraphs(num_Threads,previous);
+    
     // go around the starting points and collect connected gates, taking turns to make the subgraphs evenly sized
     std::vector<int> closed_subgraphs;
     bool all_done = false;
@@ -264,7 +285,7 @@ void CircuitGraph::defineSubgraphs_test(int num_Threads){
                 if (gates[latest_node].children.size() != 0){ // else it is a output node (no children)
                     latest_node_child_node = gates[latest_node].children[latest_node_child_counter];
                     stack<int> parent_nodes;
-                    success = collect_parents(parent_nodes, latest_node_child_node, t); 
+                    success = collect_parents(parent_nodes, latest_node_child_node, t,0); 
             //      cout << "success for node " << latest_node_child_node << "+" << success << endl;
                     if(success){
                         // add all nodes to subgraph
@@ -323,16 +344,19 @@ void CircuitGraph::defineSubgraphs_test(int num_Threads){
 
 // whenever a node is at depth 0 it gets pushed on the stack & whever a node is not collected yet it gets pushed on the stack
 // child nodes always need to get pushed on the stack before their parents, the top thing on the stack needs to get computed first
-bool CircuitGraph::collect_parents(stack<int> &parent_nodes, int current_node, int t){
+bool CircuitGraph::collect_parents(stack<int> &parent_nodes, int current_node, int t, int p){
   //  cout << "current node: " << current_node << endl; 
-    if(isInOut(current_node)){
-        return true; // skip inputs and outputs
+    if(isInput(current_node) ){
+        return true; 
     }
     if (gates[current_node].collected != -1){
         if (gates[current_node].collected == t){ // node is already part of the current subgraph, then all parent nodes need to be included already
             return true;
         }
-        if (gates[current_node].collected != t) { // the parent node is part of a different subgraph, need to cut here
+        if (gates[current_node].collected != t){ // the parent node is part of a different subgraph, need to cut here
+            if(gates[current_node].collected < p){
+                return true; // parent is from previous subgraph spliting
+            }
             return false;
         }
     }
@@ -343,7 +367,7 @@ bool CircuitGraph::collect_parents(stack<int> &parent_nodes, int current_node, i
         bool success = true;
         for (int p = 0; p < gates[current_node].parents.size(); p++){ // skips for nodes of depth == 0
             int parent = gates[current_node].parents[p];
-            success = success && collect_parents(parent_nodes, parent, t);
+            success = success && collect_parents(parent_nodes, parent, t,0);
         }
         return success;
     } 
@@ -370,7 +394,7 @@ void CircuitGraph::collect_remaining(){
             for (int j = 0; j < gates[i].parents.size(); j++) {
                 //cout << "parent: " << gates[i].parents[j] << endl;
                 int parent = gates[i].parents[j];
-                if (gates[parent].collected != -1 && !isInOut(gates[parent].id) && gates[parent].collected != idsg) { // parent is part of a different subgraph
+                if (gates[parent].collected != -1 && !isInput(gates[parent].id) && gates[parent].collected != idsg) { // parent is part of a different subgraph
                     if (std::find(sg.dependencies.begin(), sg.dependencies.end(), gates[parent].collected) == sg.dependencies.end()) {
                         sg.dependencies.push_back(gates[parent].collected);
                         cout << "added dependency: " << gates[parent].collected << endl;

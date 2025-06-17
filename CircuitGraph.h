@@ -127,9 +127,13 @@ class CircuitGraph
 
     void computeDepths();
 
-    void defineSubgraphs(int);
+    void recomputeDepths();
 
-    void defineSubgraphs_test(int num_Threads);
+    void defineSubgraphs(int num_THreads, int p);
+
+    void defineSubgraphs_test(int num_Threads, int p);
+
+    void init_subgraphs(int num_Threads, int previous);
 
     void collect_remaining();
 
@@ -147,9 +151,9 @@ class CircuitGraph
 
     int propagateDepth(int id, int depth);
 
-    bool isInOut(int id);
+    bool isInput(int id);
 
-    bool collect_parents(std::stack<int> &parent_nodes, int current_node, int t);
+    bool collect_parents(std::stack<int> &parent_nodes, int current_node, int t, int p); // t = num threads, p = previously closed subgraphs
 
     };
 

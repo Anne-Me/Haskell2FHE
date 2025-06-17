@@ -339,7 +339,7 @@ int main(int argc, char** argv) {
     
     
     if (k > 1){
-        CG.defineSubgraphs_test(k);
+        CG.defineSubgraphs_test(k,0);
         for (int i = 0; i < k; i++){
             cout << "subgraph " << i << " has " << CG.subgraphs[i].gates.size() << " gates" << endl;
         }
