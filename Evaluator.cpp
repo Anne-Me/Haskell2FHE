@@ -20,7 +20,7 @@ void Evaluator::init(CircuitGraph* CG, const TFheGateBootstrappingCloudKeySet* k
     this->working_registers = new_gate_bootstrapping_ciphertext_array(length_working, params);
     this->input_registers = input_registers;
     this->output_registers = new_gate_bootstrapping_ciphertext_array(length_output, params);
-    cout << "input length: " << length_input << " output length: " << length_output << " working length: " << length_working << endl;
+    //cout << "input length: " << length_input << " output length: " << length_output << " working length: " << length_working << endl;
 
 
 }

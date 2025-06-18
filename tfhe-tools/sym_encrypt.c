@@ -143,7 +143,7 @@ int main(int argc, char *argv[]) {
                     }
 
                     char filename[256];
-                    sprintf(filename, "ciphertext%d_%d.data", i,j);
+                    sprintf(filename, "ct_expkey_%d_%d.data", i,j);
                     FILE *ciphertext_file = fopen(filename, "wb");
                     if (ciphertext_file == NULL) {
                         perror("Failed to open ciphertext file");

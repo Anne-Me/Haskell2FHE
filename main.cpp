@@ -230,6 +230,7 @@ int main(int argc, char** argv) {
     bool print = false;
     bool eval = true;
     bool reuse_threads = true;
+    bool advanced_parallel = false; // if true, the circuit is split into subgraphs
     string format = "json"; 
 
     for (int i = 1; i < argc; ++i)
@@ -300,10 +301,9 @@ int main(int argc, char** argv) {
                 return -1;
             }
             k = atoi(argv[++i]);
-            cout << "threads: " << k << endl;
-        }
-        
-         else if (string("-test") == argv[i]){
+        } else if (string("-subcircuits") == argv[i]){
+            advanced_parallel = true;
+        } else if (string("-test") == argv[i]){
             createSimpleCircuitReuseThreads();
             return 0;
         } else if (string("-print") == argv[i]){
@@ -323,7 +323,6 @@ int main(int argc, char** argv) {
     CircuitGraph CG;
     if (format == "json"){
         read_json_to_Circuit(circuitpath, CG);
-        cout << "read circuit" << endl;
     } else if (format == "bristol"){
         read_bristol_to_Circuit(circuitpath, CG);
         cout << "read circuit" << endl;
@@ -335,11 +334,21 @@ int main(int argc, char** argv) {
 
     CG.computeDepths();
     CG.executable_order();
-    cout << "max depth " << CG.max_depth << " executable gates: " << CG.executable.size() << endl;
-    cout << endl;
+   // cout << "max depth " << CG.max_depth << " gates: " << CG.executable.size() << endl;
+   // cout << endl;
     //CG.defineSubgraphs_test(k,0);
     //CG.collect_remaining();
 
+    if(advanced_parallel == true && k > 1){
+        CG.defineSubgraphs(k,0);
+        cout << "defined subgraphs" << endl;
+        
+        CG.collect_remaining();
+        if (print == true){
+            CG.write_subgraphs("splitAES");
+        }
+        cout << "remaining gates: " << CG.subgraphs[k].gates.size() << endl;
+    }
     /*
     
     
@@ -409,7 +418,7 @@ int main(int argc, char** argv) {
 
     LweSample* temp;
 
-         // read the ciphertexts
+    // read the ciphertexts
     for (int i = 0; i<num_ciphertext; i++)
     {
         FILE* in = fopen(input_files[i], "rb");
@@ -420,9 +429,7 @@ int main(int argc, char** argv) {
           
         }
         fclose(in);
-    }
-    cout << "read inputs" << endl;
-   
+    }   
 
     
     Evaluator evaluator;
@@ -430,16 +437,17 @@ int main(int argc, char** argv) {
     evaluator.init(&CG, cloud_key, params, input_registers);
     auto begin = std::chrono::high_resolution_clock::now();
 
-    //evaluator.parallel_evaluate(k); 
-    evaluator.per_level_parallel(k);
+    if(advanced_parallel == true && k > 1){
+        evaluator.parallel_evaluate(k); 
+    } else {
+        evaluator.per_level_parallel(k);
+    }
     auto finish = std::chrono::high_resolution_clock::now();
 
     auto interval = std::chrono::duration_cast<std::chrono::microseconds>(finish - begin).count();
 
     double seconds = interval / 1000000;
     double milliseconds = interval / 1000;
-
-    cout << "evaluated" << endl;
 
 
     FILE *ciphertext_file = fopen(out_file, "wb");
@@ -449,9 +457,6 @@ int main(int argc, char** argv) {
     }
     int resultlength = CG.output_length;
 
-    /*if(format == "bristol"){
-        evaluator.move_outputs();
-    }*/
 
     cout << CG.output_length << " output length " << CG.gates.size() << "gates.size" << endl;
     if (format == "bristol") { // output gates are the last registers
@@ -466,8 +471,6 @@ int main(int argc, char** argv) {
         }
     }
     fclose(ciphertext_file);
-
-    cout << "wrote output" << endl;
 
    
 
