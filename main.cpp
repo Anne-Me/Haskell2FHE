@@ -229,6 +229,7 @@ int main(int argc, char** argv) {
 
     bool print = false;
     bool eval = true;
+    bool reuse_threads = true;
     string format = "json"; 
 
     for (int i = 1; i < argc; ++i)
@@ -298,12 +299,12 @@ int main(int argc, char** argv) {
                 printerror();
                 return -1;
             }
-
             k = atoi(argv[++i]);
+            cout << "threads: " << k << endl;
         }
         
          else if (string("-test") == argv[i]){
-            createSimpleCircuitPlus2split3();
+            createSimpleCircuitReuseThreads();
             return 0;
         } else if (string("-print") == argv[i]){
             print = true;
@@ -336,6 +337,10 @@ int main(int argc, char** argv) {
     CG.executable_order();
     cout << "max depth " << CG.max_depth << " executable gates: " << CG.executable.size() << endl;
     cout << endl;
+    //CG.defineSubgraphs_test(k,0);
+    //CG.collect_remaining();
+
+    /*
     
     
     if (k > 1){
@@ -346,6 +351,35 @@ int main(int argc, char** argv) {
 
         CG.collect_remaining();
         cout << "remaining gates: " << CG.subgraphs[k].gates.size() << endl;
+        
+      //  CG.depth_statistics_subgraphs("AESencryption_stats_10_subgraphs.txt", std::vector<int>{0,1,2,3,4,5,6,7,8,9,10});
+        if(!reuse_threads == true){ // !!!!!!!! turned off
+            // while the remaining gates are more than 1000
+            int i = 0;
+            int max_depth_sg = 0;
+            vector<int> sg_ind;
+            for(int a = 0; a < k; a++){
+             sg_ind.push_back(a); // vector of subgraph ids that are used for depth statistics
+            }
+            while(max_depth_sg < CG.max_depth){//while(CG.subgraphs[CG.subgraphs.size()-1].gates.size() > 1000){
+                i++;
+                int previous = CG.subgraphs.size() -1;
+                // evaluate all gates until the max depth that was reached
+                max_depth_sg = CG.depth_statistics_subgraphs("",sg_ind);
+                cout << "max depth of subgraphs: " << max_depth_sg << endl;
+                CG.reset_depths_from_layer(max_depth_sg);
+                // CG.recomputeDepths(); other tactic
+                CG.defineSubgraphs_test(k,previous);
+                for (int j = previous; j < previous+k; j++){
+                    cout << "subgraph " << i << " has " << CG.subgraphs[j].gates.size() << " gates" << endl;
+                    sg_ind.push_back(j);
+                }
+                cout << "adding execution layer " << CG.subgraphs.size() << endl;
+                CG.collect_remaining();
+            }
+            CG.depth_statistics_subgraphs("splittingAES"+k,sg_ind);
+        }
+
         if(print == true){
             //CG.write_subgraphs("splitPIR3ways"); 
             cout << "no writing" << endl;
@@ -353,6 +387,7 @@ int main(int argc, char** argv) {
 
         cout << "Splitting done" << endl;
     }
+    */
     if (!eval) {
         cout << "Not evaluating, exit" << endl;
         return 0;
@@ -395,7 +430,8 @@ int main(int argc, char** argv) {
     evaluator.init(&CG, cloud_key, params, input_registers);
     auto begin = std::chrono::high_resolution_clock::now();
 
-    evaluator.parallel_evaluate(k); 
+    //evaluator.parallel_evaluate(k); 
+    evaluator.per_level_parallel(k);
     auto finish = std::chrono::high_resolution_clock::now();
 
     auto interval = std::chrono::duration_cast<std::chrono::microseconds>(finish - begin).count();

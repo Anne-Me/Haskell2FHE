@@ -27,7 +27,8 @@ public:
     const TFheGateBootstrappingCloudKeySet* bk;
 
     void init(CircuitGraph* CG, const TFheGateBootstrappingCloudKeySet* key, const TFheGateBootstrappingParameterSet* params, LweSample* input_registers);
-    void parallel_evaluate(int num_threads); 
+    void per_level_parallel(int num_threads);
+    void parallel_evaluate(int num_threads);
     void evaluate_subgraph(int t); // t is subgraph id
     void evaluate_gate(int gate_id);
     LweSample* find_register(int id);

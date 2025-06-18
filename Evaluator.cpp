@@ -25,6 +25,29 @@ void Evaluator::init(CircuitGraph* CG, const TFheGateBootstrappingCloudKeySet* k
 
 }
 
+void Evaluator::per_level_parallel(int num_threads){
+    for (int i = 0; i <= CG->max_depth; i++) {
+        CG->split_level(num_threads, i);
+        vector<std::thread> threads;
+        threads.reserve(num_threads);
+        //cout << "evaluating level: " << i << " with " << CG->subgraphs.size() << " subgraphs" << std::endl;
+        if(num_threads> 1){ 
+            for (int i = 0; i < num_threads; ++i) {
+                threads.emplace_back(&Evaluator::evaluate_subgraph,this, i);
+            }
+            // wait for threads
+            for (auto& t : threads) {
+                if (t.joinable()) {
+                    t.join();
+                }
+            }
+        } else {
+            evaluate_subgraph(0);
+        }
+    }
+
+}
+
 void Evaluator::parallel_evaluate(int num_threads){
     if (CG->subgraphs.size() == 0 || num_threads == 1) {
     // do single threaded stuff
@@ -41,7 +64,7 @@ void Evaluator::parallel_evaluate(int num_threads){
             evaluate_gate(gate_id);
           //  cout << "evaluated gate: " << gate_id << " of " << CG->executable.size() << " type " << to_string(CG->gates[gate_id].type) << std::endl;
         }
-        cout << "done evaluating whole circuit." << std::endl;
+        //cout << "done evaluating whole circuit." << std::endl;
         return;
     }
     if (num_threads >= CG->subgraphs.size()) {
@@ -55,15 +78,13 @@ void Evaluator::parallel_evaluate(int num_threads){
     for (int i = 0; i < num_threads; ++i) {
         threads.emplace_back(&Evaluator::evaluate_subgraph,this, i);
     }
-    cout << "started " << num_threads << " threads to evaluate subgraphs" << std::endl;
-
     // wait for threads
     for (auto& t : threads) {
         if (t.joinable()) {
             t.join();
         }
     }
-    cout << "joined all threads" << std::endl;
+    
     // execute remaining gates
     evaluate_subgraph(num_threads);
 }
@@ -72,7 +93,7 @@ void Evaluator::evaluate_subgraph(int t){
     for (auto gate_id : CG->subgraphs[t].gates) {  
         evaluate_gate(gate_id);
     }
-    cout << "done evaluating subgraph: " << t << std::endl;
+    //cout << "done evaluating subgraph: " << t << std::endl;
 }
 
 

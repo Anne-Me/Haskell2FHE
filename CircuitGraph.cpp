@@ -87,7 +87,8 @@ void CircuitGraph::computeDepths(){
 }
 
 void CircuitGraph::recomputeDepths(){
-   int remaining = subgraphs[subgraphs.size()-1].gates.size();
+    max_depth = 0;
+    int remaining = subgraphs[subgraphs.size()-1].gates.size();
     for (int i = 0; i < remaining; i++){
           int id = subgraphs[subgraphs.size()-1].gates[i];
           gates[id].depth = 0; // reset depth
@@ -95,12 +96,43 @@ void CircuitGraph::recomputeDepths(){
      }
      int max_depth = 0;
      for (int i = 0; i < remaining; i++){
-          int id = subgraphs[subgraphs.size()-1].gates[i];
+          int id = subgraphs[subgraphs.size()-1].gates[i]; // only go over gates in the last subgraph
           for (int c = 0; c < gates[id].children.size(); c++){
-                max_depth = propagateDepth(gates[id].children[c], 0);
+                max_depth = propagateDepth(gates[id].children[c], 1);
           }
      }
      cout << "remaining max depth: " << max_depth << endl;
+     bottom_layer = 0;
+     for (int i = 0; i < remaining; i++){
+        int id = subgraphs[subgraphs.size()-1].gates[i];
+        if(gates[id].depth == 0){
+            bottom_layer++;
+        }
+    }
+    cout << "Bottom layer: " << bottom_layer << endl;
+}
+
+void CircuitGraph::reset_depths_from_layer(int d){
+    int rem_max_depth = 0;
+    for(int i = 0; i < gates.size(); i++){
+        if (gates[i].depth > d){ // exclude the layer itself
+            gates[i].depth = gates[i].depth - (d+1); // reset depth
+            gates[i].collected = -1; // reset collected
+            if( gates[i].depth > rem_max_depth){
+                rem_max_depth = gates[i].depth;
+            }
+        }
+    }
+    cout << "remaining max depth: " << rem_max_depth << endl;
+    bottom_layer = 0;
+    int remaining = subgraphs[subgraphs.size()-1].gates.size();
+     for (int i = 0; i < remaining; i++){
+        int id = subgraphs[subgraphs.size()-1].gates[i];
+        if(gates[id].depth == 0){
+            bottom_layer++;
+        }
+    }
+    cout << "Bottom layer: " << bottom_layer << endl;
 }
 
 bool CircuitGraph::identify_output(int id){
@@ -200,11 +232,15 @@ void CircuitGraph::defineSubgraphs(int num_Threads, int previous){
 
 void CircuitGraph::init_subgraphs(int num_Threads, int previous){
     float gap = (float)bottom_layer / num_Threads;
-    cout << "gap: " << gap << endl;
+
     if (gap < 1){
-        cerr << "more threads than bottom layer gates??" << endl;
-        return;
+        cout << "more threads than bottom layer gates" << endl;
+        while(gap < 1){
+            num_Threads--;
+            gap = (float)bottom_layer / num_Threads;
+        }
     }
+    cout << "gap: " << gap << endl;
 
     // select from the bottomlayer by picking every gapth gate
     //std::vector<SubGraph> subgraphs;
@@ -240,14 +276,17 @@ void CircuitGraph::init_subgraphs(int num_Threads, int previous){
         for (int i = 0; i < last.gates.size(); i++)
         {
            if(gates[last.gates[i]].depth == 0){
-                if (skip < gap){
+                if (skip < next){
                     skip++;
                 } else {
                     SubGraph sg = {t+previous,vector<int>{last.gates[i]},vector<int>{},vector<int>{},vector<int>{}, false, 0,0};
                     subgraphs.push_back(sg);
                     gates[last.gates[i]].collected = t+previous;
                     t++;
-                    skip = 0;
+                    skip++;
+                    float nextfloat = (t+1)*gap;
+
+                    next = floor((t+1)*gap);
                 }
             }
         }
@@ -273,7 +312,7 @@ void CircuitGraph::defineSubgraphs_test(int num_Threads, int previous){
     std::vector<int> closed_subgraphs;
     bool all_done = false;
     while(!all_done){
-        for(int t = 0; t < subgraphs.size(); t++){
+        for(int t = previous; t < subgraphs.size(); t++){
             if (subgraphs[t].closed){continue;}
             bool added_nodes = false;
             
@@ -380,14 +419,16 @@ bool CircuitGraph::collect_parents(stack<int> &parent_nodes, int current_node, i
 after calling defineSubgraphs, this function collects all remaining nodes that are not part of a subgraph
 */
 void CircuitGraph::collect_remaining(){
-    if (subgraphs.size() == 0) {
-        throw std::runtime_error("No subgraphs defined. Please call defineSubgraphs() first.");
-    }
     // iterate over all gates and collect those that are not part of a subgraph
     int idsg = subgraphs.size();
     SubGraph sg = {idsg,vector<int>{},vector<int>{},vector<int>{},vector<int>{}, false, 0,0};
+    int num_bottom = 0;
+    int reached_depth = 0;
     for (int i = 0; i < gates.size(); i++) {
         if (gates[i].collected == -1) { // not part of a subgraph
+        if(gates[i].depth == 0){
+            num_bottom++;
+        }
             sg.gates.push_back(i);
             gates[i].collected = idsg; // mark as collected in the last subgraph
             // find out what the dependencies of the subgraph are
@@ -397,12 +438,19 @@ void CircuitGraph::collect_remaining(){
                 if (gates[parent].collected != -1 && !isInput(gates[parent].id) && gates[parent].collected != idsg) { // parent is part of a different subgraph
                     if (std::find(sg.dependencies.begin(), sg.dependencies.end(), gates[parent].collected) == sg.dependencies.end()) {
                         sg.dependencies.push_back(gates[parent].collected);
-                        cout << "added dependency: " << gates[parent].collected << endl;
+                       // cout << "added dependency: " << gates[parent].collected << endl;
                     }
                 }
             }            
+        } else {
+            if(reached_depth < gates[i].depth){
+                reached_depth = gates[i].depth;
+            }
+            
         }
     }
+
+    cout << "gates left in bottom layer: " << num_bottom << " reached depth " << reached_depth << endl;
     sg.closed = true;
     subgraphs.push_back(sg);
 }
@@ -416,6 +464,32 @@ void CircuitGraph::executable_order(){
                 executable.push_back(j);
             }
         }   
+    }
+}
+
+void CircuitGraph::split_level(int num_Threads, int d){
+    subgraphs.clear();
+    for (int i = 0; i < num_Threads; i++){
+        subgraphs.push_back(SubGraph{i, vector<int>{}, vector<int>{}, vector<int>{}, vector<int>{}, false, 0, 0});
+    }
+    int num_gates = 0;
+    for(int i = 0; i < executable.size();i++){
+        if(gates[executable[i]].depth == d){
+            num_gates++;
+        }
+    }
+    if(num_gates == 0){
+        cerr << "no gates at depth " << d << endl;
+        return;
+    }
+    float gates_per_thread = (float)num_gates / num_Threads;
+
+    int k = 0;
+    for(int i = 0; i < gates.size(); i++){
+        if(gates[i].depth == d){
+            subgraphs[k].gates.push_back(i);
+            k = (k+1) % num_Threads; 
+        }
     }
 }
 
@@ -471,4 +545,63 @@ void CircuitGraph::write_subgraphs(std::string file_prefix)
             throw std::runtime_error("Could not open file for writing: " + file_prefix + std::to_string(i) + ".json");
         }
     }
+}
+
+
+void CircuitGraph::depth_statistics(string file){
+    // count how many gates per depth there are
+    std::vector<int> depth_count(max_depth + 1, 0);
+    int ins = 0;
+    for (const auto& gate : gates) {
+        if (gate.depth >= 0 && gate.depth < depth_count.size()) {
+            depth_count[gate.depth]++;
+        } else if (gate.depth < 0) {
+            ins++;
+        }
+    }
+    // write to file
+    std::ofstream f(file);
+    if (!f.is_open()) {
+        throw std::runtime_error("Could not open file for writing: " + file);
+    }
+    f << "Depth,Count\n";
+    f << "Input:" << ins << "\n"; // write number of inputs
+    for (int i = 0; i < depth_count.size(); i++) {
+        f << "Depth " << i << ": " << depth_count[i] << "\n";
+    }
+    f.close();
+}
+
+int CircuitGraph::depth_statistics_subgraphs(string file, std::vector<int> subgraphs_ids){
+    // count how many gates per depth there are per subgraph
+    bool write = true;
+    int max_depth_sg = 0;
+    std::ofstream f(file);
+    if (!f.is_open()) {
+        write = false;
+    }
+
+    for(int i = 0; i < subgraphs_ids.size();i++){
+        std::vector<int> depth_count(max_depth + 1, 0);
+
+        for (const auto& gate_id : subgraphs[subgraphs_ids[i]].gates) {
+            Node gate = gates[gate_id];
+            if (gate.depth >= 0 && gate.depth < depth_count.size()) {
+                depth_count[gate.depth]++;
+                if(gate.depth > max_depth_sg){
+                    max_depth_sg = gate.depth; // find the maximum depth in all subgraphs
+                }
+            }
+            
+        }
+        if(write){ f << "Subgraph " << subgraphs_ids[i] << ":\n"; }
+        for (int i = 0; i < depth_count.size(); i++) {
+            if(depth_count[i] == 0){
+                continue; // skip empty depths
+            }
+            if(write){f << "Depth " << i << ": " << depth_count[i] << "\n";}
+        }
+    }
+    if(write){f.close();}
+    return max_depth_sg;
 }

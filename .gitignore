@@ -4,6 +4,9 @@ build/*
 *.data
 *.key
 
+*stats*
+*Stats*
+
 .vscode/*
 
 # Prerequisites

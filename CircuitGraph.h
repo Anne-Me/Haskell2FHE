@@ -128,10 +128,13 @@ class CircuitGraph
     void computeDepths();
 
     void recomputeDepths();
+    void reset_depths_from_layer(int d);
 
     void defineSubgraphs(int num_THreads, int p);
 
     void defineSubgraphs_test(int num_Threads, int p);
+
+    void split_level(int num_Threads, int d);
 
     void init_subgraphs(int num_Threads, int previous);
 
@@ -142,6 +145,9 @@ class CircuitGraph
     void write(std::string filename);
 
     void write_subgraphs(std::string file_prefix);
+
+    void depth_statistics(std::string filename);
+    int depth_statistics_subgraphs(std::string file, std::vector<int> subgraphs_ids);
 
     void push_back_Gate(int id, GATES type, std::vector<int> parents, int out);
     void set_gate(int id, GATES type, std::vector<int> parents, int out);
