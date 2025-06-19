@@ -1,24 +1,46 @@
+### A Haskell to FHE Transpiler 
 
-### Compile
+The compiler uses 4 tools: Clash, Yosys, tfhe and this library.
+You can execute examples even if only the tfhe library and this repo are installed (Step 1 and Step 2)
+To compile Haskell prgrams from scratch please install Clash and Yosys too and follow the instructions in Compiling Haskell from Scratch
+
+# Step 1: Clone and Compile tfhe
+Maybe you need some essentials first
 ```
+sudo apt update
+sudo apt install build-essentials
+```
+
+```
+git clone git@github.com:tfhe/tfhe.git
+mkdir build  
+cd build  
+cmake ../src -DENABLE_TESTS=off -DENABLE_FFTW=on -DCMAKE_BUILD_TYPE=optim 
+make  
+```
+
+# Step 2: Clone and Compile this library 
+```
+git clone git@github.com:Anne-Me/Haskell2FHE.git
 mkdir build  
 cd build  
 cmake ..  
 make  
 ```
-### Execute
-(currently runs pri example)
 
-```
-./run.sh 
-```
+# Install Clash
+install clash https://clash-lang.org/ 
 
-## old 
+
+# Install Yosys
 Install yosys: https://yosyshq.net/yosys/documentation.html  
 
 
-install clash https://clash-lang.org/ 
+# Execute Examples
 
+
+
+### OLD INSTRUCTIONS TODO
 
 ### Run a clash example program for addition of two numbers:
 cd my-clash-project/src/Examples
