@@ -1,10 +1,10 @@
-### A Haskell to FHE Transpiler 
+## A Haskell to FHE Transpiler 
 
 The compiler uses 4 tools: Clash, Yosys, tfhe and this library.
 You can execute examples even if only the tfhe library and this repo are installed (Step 1 and Step 2)
 To compile Haskell prgrams from scratch please install Clash and Yosys too and follow the instructions in Compiling Haskell from Scratch
 
-# Step 1: Clone and Compile tfhe
+### Step 1: Clone and Compile tfhe
 Maybe you need some essentials first
 ```
 sudo apt update
@@ -19,7 +19,7 @@ cmake ../src -DENABLE_TESTS=off -DENABLE_FFTW=on -DCMAKE_BUILD_TYPE=optim
 make  
 ```
 
-# Step 2: Clone and Compile this library 
+### Step 2: Clone and Compile this library 
 ```
 git clone git@github.com:Anne-Me/Haskell2FHE.git
 mkdir build  
@@ -28,15 +28,15 @@ cmake ..
 make  
 ```
 
-# Install Clash
+### Step 3: Install Clash
 install clash https://clash-lang.org/ 
 
 
-# Install Yosys
+### Step 4: Install Yosys
 Install yosys: https://yosyshq.net/yosys/documentation.html  
 
 
-# Execute Examples
+### Execute Examples
 
 
 
