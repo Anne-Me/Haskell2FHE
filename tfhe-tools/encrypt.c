@@ -12,7 +12,7 @@ void encrypt_bit(LweSample* ciphertext, int bit, TFheGateBootstrappingSecretKeyS
 }
 
 void print_error(const char *prog_name) {
-    printf("Usage: %s -n <number of plaintexts> [<plaintext1> <plaintext2> ...] -b bits -sk secret.key\n", prog_name);
+    printf("Usage: %s -n <number of plaintexts> [<plaintext1> <plaintext2> ...] -b bits -key secret.key\n", prog_name);
 }
 
 
@@ -56,9 +56,9 @@ int main(int argc, char *argv[]) {
             }
             i++;
         }
-        else if (strcmp(argv[i], "-sk") == 0) {
+        else if (strcmp(argv[i], "-key") == 0) {
             if (i + 1 >= argc) {
-                fprintf(stderr, "Error: `-sk` requires a filename argument.\n");
+                fprintf(stderr, "Error: `-key` requires a filename argument.\n");
                 print_error(argv[0]);
                 return 0;
             }

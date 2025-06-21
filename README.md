@@ -5,10 +5,11 @@ You can execute examples even if only the tfhe library and this repo are install
 To compile Haskell prgrams from scratch please install Clash and Yosys too and follow the instructions in Compiling Haskell from Scratch
 
 ### Step 1: Clone and Compile tfhe
-Maybe you need some essentials first
+Install build tools.
+
 ```
 sudo apt-get update
-sudo apt-get install build-essential
+sudo apt-get install build-essential cmake
 ```
 
 ```

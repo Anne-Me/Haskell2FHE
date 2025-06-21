@@ -21,9 +21,9 @@ endif()
 link_directories("${TFHE_PREFIX}/lib")
 
 #find_package(nlohmann_json 3.2.0 REQUIRED)
-if (NOT DEFINED NLOHMANN_JSON_DIR)
-    set(NLOHMANN_JSON_DIR "/home/anne/CLionProjects/KashifsEndResult/FHE-Compiler/")
-endif()
+#if (NOT DEFINED NLOHMANN_JSON_DIR)
+#    set(NLOHMANN_JSON_DIR CMAKE_CURRENT_LIST_DIR)
+#endif()
 
 
 set(SOURCES
@@ -37,7 +37,20 @@ add_executable(clash2tfhe ${SOURCES})
 target_include_directories(clash2tfhe 
     PRIVATE 
     "${NLOHMANN_JSON_DIR}"
-    "${TFHE_PREFIX}/include"
+    "${CMAKE_SOURCE_DIR}/nlohmann"
 )
 
 target_link_libraries(clash2tfhe PRIVATE tfhe-spqlios-fma)
+
+# TFHE TOOLS
+add_executable(keygen tfhe-tools/keygen.c)
+add_executable(encrypt tfhe-tools/encrypt.c)
+add_executable(decrypt tfhe-tools/decrypt.c)
+
+target_include_directories(keygen PRIVATE ${TFHE_PREFIX}/include)
+target_include_directories(encrypt PRIVATE ${TFHE_PREFIX}/include)
+target_include_directories(decrypt PRIVATE ${TFHE_PREFIX}/include)
+
+target_link_libraries(keygen tfhe-spqlios-fma)
+target_link_libraries(encrypt tfhe-spqlios-fma)
+target_link_libraries(decrypt tfhe-spqlios-fma)
