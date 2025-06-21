@@ -7,20 +7,21 @@ To compile Haskell prgrams from scratch please install Clash and Yosys too and f
 ### Step 1: Clone and Compile tfhe
 Maybe you need some essentials first
 ```
-sudo apt update
-sudo apt install build-essentials
+sudo apt-get update
+sudo apt-get install build-essential
 ```
 
 ```
 git clone git@github.com:tfhe/tfhe.git
 cd tfhe
 make
-make install
+sudo make install
 ```
 
 ### Step 2: Clone and Compile this library 
 ```
 git clone git@github.com:Anne-Me/Haskell2FHE.git
+cd Haskell2FHE
 mkdir build  
 cd build  
 cmake ..  
