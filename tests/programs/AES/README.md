@@ -4,7 +4,7 @@ create input ciphertexts (key)
 ./sym_encrypt -n 22 0x0001020304050607  0x08090A0B0C0D0E0F  0xD6AA74FDD2AF72FA 0xDAA678F1D6AB76FE  0xB692CF0B643DBDF1  0xBE9BC5006830B3FE   0xB6FF744ED2C2C9BF  0x6C590CBF0469BF41  0x47F7F7BC95353E03  0xF96C32BCFD058DFD   0x3CAAA3E8A99F9DEB  0x50F3AF57ADF622AA 0x5E390F7DF7A69296  0xA7553DC10AA31F6B  0x14F9701AE35FE28C  0x440ADF4D4EA9C026  0x47438735A41C65B9  0xE016BAF4AEBF7AD2  0x549932D1F0855768  0x1093ED9CBE2C974E  0x13111D7FE3944A17  0xF307A78B4D2B30C5 -b 128 -sk secretnew.key
 
 run test 
-./../build/clash2tfhe -c ../tests/programs/AES/AESwithBPSBox.json -n 24 ct_input_1.data ct_input_2.data ct_expkey_0_1.data ct_expkey_1_1.data ct_expkey_2_1.data ct_expkey_3_1.data ct_expkey_4_1.data ct_expkey_5_1.data ct_expkey_6_1.data ct_expkey_7_1.data ct_expkey_8_1.data ct_expkey_9_1.data ct_expkey_10_1.data ct_expkey_11_1.data ct_expkey_12_1.data ct_expkey_13_1.data ct_expkey_14_1.data ct_expkey_15_1.data ct_expkey_16_1.data ct_expkey_17_1.data ct_expkey_18_1.data ct_expkey_19_1.data ct_expkey_20_1.data ct_expkey_21_1.data -cloud boots.key -t 5 -b 128 -out result.data
+./../build/clash2tfhe -c ../tests/programs/AES/AESwithBPSBox.json -n 24 ct_input_1.data ct_input_0.data ct_expkey_0_1.data ct_expkey_1_1.data ct_expkey_2_1.data ct_expkey_3_1.data ct_expkey_4_1.data ct_expkey_5_1.data ct_expkey_6_1.data ct_expkey_7_1.data ct_expkey_8_1.data ct_expkey_9_1.data ct_expkey_10_1.data ct_expkey_11_1.data ct_expkey_12_1.data ct_expkey_13_1.data ct_expkey_14_1.data ct_expkey_15_1.data ct_expkey_16_1.data ct_expkey_17_1.data ct_expkey_18_1.data ct_expkey_19_1.data ct_expkey_20_1.data ct_expkey_21_1.data -cloud boots.key -b 128 -out result.data -t 1
 
 Compilation for Verilog:
 stack exec clash -- --verilog src/Example/Project.hs
