@@ -13,10 +13,9 @@ sudo apt install build-essentials
 
 ```
 git clone git@github.com:tfhe/tfhe.git
-mkdir build  
-cd build  
-cmake ../src -DENABLE_TESTS=off -DENABLE_FFTW=on -DCMAKE_BUILD_TYPE=optim 
-make  
+cd tfhe
+make
+make install
 ```
 
 ### Step 2: Clone and Compile this library 
