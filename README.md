@@ -29,7 +29,7 @@ make
 cd ../..
 ```
 
-At this point you can already execute the example programs (see "Executing Examples") and you can run programs in Bristal Fashion format or programs that were created by the tojson command in Yosys.
+At this point you can already execute the example programs using precompiled circuits (see "Executing Examples") and you can run programs in Bristol Fashion format or programs that were created by the tojson command in Yosys.
 
 ### Step 3: Install Clash
 install clash https://clash-lang.org/ 
@@ -62,61 +62,22 @@ The following script runs key generation, encryption of two numbers, evaluation 
 ./execute_Add.sh
 ```
 
+#### AES-128 encryption
+
+
+#### PIR-100 
+The following script creates a dummy database which encrypts values 0 to 99 as 32 bit integers and a query integer. Then it evaluates PIR homomorphically using 5 parallel threads and decrypts the output. 
+
+```
+./executePIR100.sh 
+```
+
 
 ### Compile Haskell program into FHE compatible boolean circuit
 
+TODO: add explanation
+
 ### Now you can create your ciphertexts and run the program
 
-```
-./build/encrypt
-```
-
-
-### OLD INSTRUCTIONS TODO
-
-### Run a clash example program for addition of two numbers:
-cd my-clash-project/src/Examples
-#rename the add2.js to Project.hs
-
-cd my-clash-project/tests/Tests/Example
-# rename the add2.js to Project.hs
-
-### Go to Clash main folder
-
-stack build
-stack test
-stack run clash -- Example.Project --verilog 
-
-### Run Yosys for optimisation
-read_verilog verilog/Example.Project.topEntity/topEntity.v 
-flatten 
-Synth 
-write_json add2.json 
-
-# copy add2.json /FHE-Compiler/programs
-
-### To run the direct script:
-./fhe.sh
-
-### Output ###
-input_length: 16 result_length: 8
-done evaluating, numgates: 40
-Total execution time: 0.000000 seconds (663.000 milliseconds)
-Plaintext 0: 8
-Execution time: 1.836806707 seconds
-
-
-### Run command by command
-
-# Encrypt the numbers
-cd ../FHE-Compiler
-./gen_and_encrypt -n 2 25 32 -secret secret.key cloud.key 
-
-
-# Perform homomorphic operations:
-./clash2tfhe -c programs/add2.json -n 2 ciphertext0.data ciphertext1.data -cloud cloud.key -out result.data -b 8 
-
-# Decrypt the result
-./decrypt -key secret.key result.data  
-
+TODO: add explanation
 
