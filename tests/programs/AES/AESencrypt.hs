@@ -100,7 +100,7 @@ stateToCiphertext (State w0 w1 w2 w3 _) =
   Ciphertext $ concat (octets <$> (w0 :> w1 :> w2 :> w3 :> Nil))
 
 
-
+-- Bayer-Peralta sBox
 sBox :: BitVector 8 -> BitVector 8
 sBox x = pack (s0, complement s1, complement s2, s3, s4, s5, complement s6, complement s7)
 --inv x = pack (complement s7, complement s6, s5, s4, s3, s2, complement s1, s0)

@@ -1,8 +1,6 @@
 ## A Haskell to FHE Transpiler 
 
-The compiler uses 4 tools: Clash, Yosys, tfhe and this library.
-You can execute examples even if only the tfhe library and this repo are installed (Step 1 and Step 2)
-To compile Haskell prgrams from scratch please install Clash and Yosys too and follow the instructions in Compiling Haskell from Scratch
+The compiler takes Haskell programs and transforms them into Boolean circuits using Clash and Yosys. Then the program evaluated using the tfhe library. You can evaluate the program in parallel using any number of threads by specifying the thread parameter.
 
 ### Step 1: Clone and Compile tfhe
 Install build tools.
@@ -17,6 +15,7 @@ git clone git@github.com:tfhe/tfhe.git
 cd tfhe
 make
 sudo make install
+cd ..
 ```
 
 ### Step 2: Clone and Compile this library 
@@ -27,18 +26,50 @@ mkdir build
 cd build  
 cmake ..  
 make  
+cd ../..
 ```
+
+At this point you can already execute the example programs (see "Executing Examples") and you can run programs in Bristal Fashion format or programs that were created by the tojson command in Yosys.
 
 ### Step 3: Install Clash
 install clash https://clash-lang.org/ 
 
 
 ### Step 4: Install Yosys
-Install yosys: https://yosyshq.net/yosys/documentation.html  
+Installing yosys (https://yosyshq.net/yosys/documentation.html)
+
+```
+sudo apt-get install build-essential clang lld bison flex \
+	libreadline-dev gawk tcl-dev libffi-dev git \
+	graphviz xdot pkg-config python3 libboost-system-dev \
+	libboost-python-dev libboost-filesystem-dev zlib1g-dev
+git clone --recurse-submodules https://github.com/YosysHQ/yosys.git
+cd yosys
+git checkout v0.53
+make
+sudo make install
+cd ..
+```
 
 
-### Execute Examples
+### Executing Examples
 
+#### Addition of 64-bit numbers
+
+The following script runs key generation, encryption of two numbers, evaluation and decryption.
+
+```
+./execute_Add.sh
+```
+
+
+### Compile Haskell program into FHE compatible boolean circuit
+
+### Now you can create your ciphertexts and run the program
+
+```
+./build/encrypt
+```
 
 
 ### OLD INSTRUCTIONS TODO

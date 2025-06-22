@@ -203,7 +203,7 @@ void read_bristol_to_Circuit(string circuitpath, CircuitGraph &CG){
 }
 
 void printerror(){
-    std::cerr << "Usage: ./clashtoFHE -c jsoncircuitfile -n n a0 a1 .. a7 b1 b2 .. b7 -b bitlength [-t threads] -cloud cloudkey -out outfile " << std::endl;
+    std::cerr << "Usage: ./clash2tfhe -c jsoncircuitfile -n n a0 a1 .. a7 b1 b2 .. b7 -b bitlength [-t threads] -boot bootstrappingkey -out outfile " << std::endl;
     // optinall add -print for printing
     // -test for testing only
 }
@@ -276,7 +276,7 @@ int main(int argc, char** argv) {
             out_file = argv[++i]; 
         }
        
-        else if (string("-cloud") == argv[i] ){
+        else if (string("-boot") == argv[i] ){
             if (argc <= i + 1)
             {
                 printerror();
@@ -444,10 +444,10 @@ int main(int argc, char** argv) {
     }
     auto finish = std::chrono::high_resolution_clock::now();
 
-    auto interval = std::chrono::duration_cast<std::chrono::microseconds>(finish - begin).count();
+    long long interval = std::chrono::duration_cast<std::chrono::microseconds>(finish - begin).count();
 
-    double seconds = interval / 1000000;
-    double milliseconds = interval / 1000;
+    double seconds = static_cast<double>(interval) / 1000000;
+    double milliseconds = static_cast<double>(interval) / 1000;
 
 
     FILE *ciphertext_file = fopen(out_file, "wb");
@@ -458,7 +458,6 @@ int main(int argc, char** argv) {
     int resultlength = CG.output_length;
 
 
-    cout << CG.output_length << " output length " << CG.gates.size() << "gates.size" << endl;
     if (format == "bristol") { // output gates are the last registers
         int first_gate = CG.gates.size() - CG.output_length; 
         int eval_first_gate = evaluator.length_working - evaluator.length_output; // first gate is the first working register
@@ -475,10 +474,8 @@ int main(int argc, char** argv) {
    
 
 
-    std::cout << "Evaluation execution time: "
-              << std::fixed << std::setprecision(6) << seconds << " seconds ("
-              << std::fixed << std::setprecision(3) << milliseconds << " milliseconds)"
-              << std::endl;
+    std::cout << "Homomorphic Evaluation time: "
+              << std::fixed << std::setprecision(6) << seconds << " seconds"  << std::endl;
     return 0;
     
 }

@@ -10,6 +10,18 @@ void print_error(const char *progname) {
     printf("Usage: decrypt %s -key <secret_keyfile> -b bits <ciphertext1.data> [<ciphertext2.data> ...]\n", progname);
 }
 
+void print_binary(uint64_t value) {
+    for (int i = 63; i >= 0; i--) {
+        putchar((value >> i) & 1 ? '1' : '0');
+
+        // Optional: print a space every 8 bits
+        if (i % 8 == 0) {
+            putchar(' ');
+        }
+    }
+    putchar('\n');
+}
+
 int main(int argc, char *argv[]) {
     if (argc < 4) {
         print_error(argv[0]);
@@ -103,6 +115,9 @@ int main(int argc, char *argv[]) {
                     plaintext |= ((uint64_t )bit << j);
                 }
                 printf("part %d = 0x%016" PRIx64 "\n", chunks-k, plaintext);
+                print_binary(plaintext);
+
+    
             }
             
         }
