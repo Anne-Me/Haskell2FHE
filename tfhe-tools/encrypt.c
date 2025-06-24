@@ -151,7 +151,7 @@ int main(int argc, char *argv[]) {
                         for (int j = 1; j <= chunks; ++j) {
                             LweSample *ciphertext = new_gate_bootstrapping_ciphertext_array(64, params); //b
                             uint64_t plaintext = hexValues[chunks-j]; // start with last chunk to preserve LSB ordering
-                            printf("Encrypting = 0x%016" PRIx64 " in ct %s_%d_%d \n", plaintext, prefixout, i,j);
+                            printf("Encrypting = 0x%016" PRIx64 " in ct %s_%d_%d \n", plaintext, prefixout, i,j-1);
                             for (int k = 0; k < 64; k++) {
                                 int bit = (plaintext >> (63-k)) & 1;
                                 encrypt_bit(&ciphertext[k], bit, sk);

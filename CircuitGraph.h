@@ -152,6 +152,7 @@ class CircuitGraph
     void push_back_Gate(int id, GATES type, std::vector<int> parents, int out);
     void set_gate(int id, GATES type, std::vector<int> parents, int out);
     bool identify_output(int id);
+    void gate_statistics();
 
     private:
 

@@ -532,6 +532,78 @@ void CircuitGraph::write_subgraphs(std::string file_prefix)
     }
 }
 
+void CircuitGraph::gate_statistics(){
+    std::vector<int> gates_stats(11,0);
+
+    for (int gateid : executable) {
+        Node gate = gates[gateid];
+        switch (gate.type) {
+        case GATES::AND:
+            gates_stats[0] = gates_stats[0]+1;
+            break;
+        case GATES::OR:
+            gates_stats[1] = gates_stats[1]+1;
+            break;
+        case GATES::NAND:
+            gates_stats[2] = gates_stats[2]+1;
+            break;
+        case GATES::XOR:
+            gates_stats[3] = gates_stats[3]+1;
+            break;
+        case GATES::NOR:
+            gates_stats[4] = gates_stats[4]+1;
+            break;
+        case GATES::XNOR:
+            gates_stats[5] = gates_stats[5]+1;
+            break;
+        case GATES::ANDYN:
+            gates_stats[6] = gates_stats[6]+1;
+            break;
+        case GATES::NOT:
+            gates_stats[7] = gates_stats[7]+1;
+            break;
+        case GATES::ORYN:
+            gates_stats[8] = gates_stats[8]+1;
+            break;
+        case GATES::MUX:
+            gates_stats[9] = gates_stats[9]+1;
+            break;
+        case GATES::INPUT:
+            gates_stats[10] = gates_stats[10]+1;
+            break;
+        default:
+            std::cout << "unknown gate" << to_string(gate.type) << std::endl;
+            break;
+        }
+    }
+
+    for(int i = 0; i < gates_stats.size(); i++){
+        if(i == 0){
+            cout << "AND: ";
+        } else if (i == 1){
+            cout << "OR: ";
+        } else if (i == 2){
+            cout << "NAND: ";
+        } else if (i == 3){
+            cout << "XOR: ";
+        } else if (i == 4){
+            cout << "NOR: ";
+        } else if (i == 5){
+            cout << "XNOR: ";
+        } else if (i == 6){
+            cout << "ANDYN: ";
+        } else if (i == 7){
+            cout << "NOT: ";
+        } else if (i == 8){
+            cout << "ORYN: ";
+        } else if (i == 9){
+            cout << "MUX: ";
+        } else if (i == 10){
+            cout << "INPUT: ";
+        }
+        std::cout << gates_stats[i] << std::endl;
+    }
+}
 
 void CircuitGraph::depth_statistics(string file){
     // count how many gates per depth there are

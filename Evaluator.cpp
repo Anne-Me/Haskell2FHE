@@ -21,8 +21,6 @@ void Evaluator::init(CircuitGraph* CG, const TFheGateBootstrappingCloudKeySet* k
     this->input_registers = input_registers;
     this->output_registers = new_gate_bootstrapping_ciphertext_array(length_output, params);
     //cout << "input length: " << length_input << " output length: " << length_output << " working length: " << length_working << endl;
-
-
 }
 
 void Evaluator::per_level_parallel(int num_threads){
@@ -167,12 +165,31 @@ void Evaluator::evaluate_gate(int gate_id) {
                 break;
             }
             case MUX: {
+                int ct_ipA = node.parents[0]; 
+                int ct_ipB = node.parents[1];
+                int ct_ipC = node.parents[2];
+                int ct_out = node.out;
+                //cout << "MUX " << ct_ipA << ct_ipB << ct_ipC << ct_out << endl;
+                /*
+                LweSample* temp_registers  = new_gate_bootstrapping_ciphertext_array(4, bk->params);
+
+                // (c AND a) OR (NOT(c) AND b)
+                bootsAND(&temp_registers[0], find_register(ct_ipC), find_register(ct_ipA), bk);
+                bootsNOT(&temp_registers[1], find_register(ct_ipC), bk);
+                bootsAND(&temp_registers[2], &temp_registers[1], find_register(ct_ipB), bk);
+                bootsOR(&temp_registers[3], &temp_registers[0], &temp_registers[2], bk);
+
+                bootsCOPY(find_register(ct_out), &temp_registers[3], bk);
+                
+                
+                delete_gate_bootstrapping_ciphertext_array(4,temp_registers);
+                */
+                bootsMUX(find_register(ct_out), find_register(ct_ipC), find_register(ct_ipA),find_register(ct_ipB), bk);
                 break;
             }
             default: {
-                cout << "gate type: " << to_string(gate) << endl;
+                cout << "unknwon gate type: " << to_string(gate) << endl;
             }
-
         }
 }
 

@@ -14,7 +14,7 @@ void print_binary(uint64_t value) {
     for (int i = 63; i >= 0; i--) {
         putchar((value >> i) & 1 ? '1' : '0');
 
-        // Optional: print a space every 8 bits
+        // print a space every 8 bits
         if (i % 8 == 0) {
             putchar(' ');
         }
@@ -108,6 +108,21 @@ int main(int argc, char *argv[]) {
             int chunks = bits/64;
             //printf("chunks: %d \n", chunks);
 
+            for(int k = 0; k < chunks ; k++){
+                uint64_t plaintext = 0;
+                for (int j = 0; j < 64; j++) {
+                    int bit = bootsSymDecrypt(&ciphertext[j+ k*64], key);
+                    plaintext |= ((uint64_t )bit << j);
+                }
+                printf("part %d = 0x%016" PRIx64 "\n", chunks-k, plaintext);
+                print_binary(plaintext);
+            }
+        }
+        /*
+        else { reverse
+            int chunks = bits/64;
+            //printf("chunks: %d \n", chunks);
+
             for(int k = chunks-1; k >=0 ; k--){
                 uint64_t plaintext = 0;
                 for (int j = 0; j < 64; j++) {
@@ -120,7 +135,7 @@ int main(int argc, char *argv[]) {
     
             }
             
-        }
+        }*/
         
 
         delete_gate_bootstrapping_ciphertext_array(bits, ciphertext);

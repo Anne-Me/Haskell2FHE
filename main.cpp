@@ -57,8 +57,7 @@ void read_json_to_Circuit(string circuitpath, CircuitGraph &CG){
 
     int counter = input_length+result_length; 
     int offset = 2; // why yosys
-    for (auto el : data["modules"]["topEntity"]["cells"].items())
-    {
+    for (auto el : data["modules"]["topEntity"]["cells"].items()) {
         string key = el.key();
         json conn = el.value()["connections"];
         string type = el.value()["type"];
@@ -68,7 +67,8 @@ void read_json_to_Circuit(string circuitpath, CircuitGraph &CG){
 
         vector<int> parents;
         int in_1;
-        int in_2;       
+        int in_2;   
+        int in_3;    
         int out;
         if (conn.contains("A")) {
             in_1 = conn["A"][0];
@@ -83,18 +83,22 @@ void read_json_to_Circuit(string circuitpath, CircuitGraph &CG){
           //  cout << "input B: " << in_2 << endl;
         }else if (gate_type != GATES::NOT){
             std::cerr << "Error: Gate " << counter+offset << " has no input B." << std::endl;
-        }     
+        }
+        if (conn.contains("S")) { // MUX gates have third input "S"
+            in_3 = conn["S"][0];
+            parents.push_back(in_3-offset);
+          //  cout << "input C: " << in_1 << endl;
+        }
+
          // Y is not giving us the child info but register to place otput
         if (conn.contains("Y")) {
             out = (int)conn["Y"][0];
            // cout << "output: " << out << endl;
         }  
-        try
-        {  
-        CG.set_gate(out-offset, gate_type, parents, out-offset);
-        }
-        catch(const std::exception& e)
-        {
+
+        try {  
+            CG.set_gate(out-offset, gate_type, parents, out-offset);
+        } catch(const std::exception& e) {
             cout << "Error while setting gate: " << out-offset << endl;
             cout << "A" << in_1-offset << " B: " << in_2-offset << " out: " << out-offset << endl;
             std::cerr << e.what() << '\n';
@@ -111,10 +115,12 @@ void read_json_to_Circuit(string circuitpath, CircuitGraph &CG){
             CG.addChild(in_2-offset, out - offset);
           //  cout << "added child B" << endl;
         }       
-
+        if (conn.contains("S")) {
+           CG.addChild(in_3-offset, out - offset);
+          //  cout << "added child B" << endl;
+        }
         counter++;
     }
-
 }
 
 void read_bristol_to_Circuit(string circuitpath, CircuitGraph &CG){
@@ -204,6 +210,7 @@ void read_bristol_to_Circuit(string circuitpath, CircuitGraph &CG){
 
 void printerror(){
     std::cerr << "Usage: ./clash2tfhe -c jsoncircuitfile -n n a0 a1 .. a7 b1 b2 .. b7 -b bitlength [-t threads] -boot bootstrappingkey -out outfile " << std::endl;
+    // -bb for giving a bitlength per input -bb 8 8 1 Number of numbers after -bb needs to match n
     // optinall add -print for printing
     // -test for testing only
 }
@@ -222,7 +229,8 @@ int main(int argc, char** argv) {
     int num_ciphertext;
     int bitlength; 
     int k = 1; // number of threads
-   
+    std::vector<int> bitlengths; // if -bb is used
+
     std::vector<char *> input_files;
     char* out_file;
     char* cloud_key_filename;
@@ -294,6 +302,21 @@ int main(int argc, char** argv) {
             }
 
             bitlength = atoi(argv[++i]);
+        }else  if (string("-bb") == argv[i]) {
+            if (argc <= i + num_ciphertext)
+            {
+                printerror();
+                cout << "-bb needs to come with exactly n numbers, use -bb only after -n" << endl;
+                return -1;
+            }
+            for (int j = 0; j < num_ciphertext; ++j){
+                bitlength = atoi(argv[++i]);
+                if (bitlength <= 0) {
+                    cerr << "Invalid bitlength: " << bitlength << endl;
+                    return -1;
+                }
+                bitlengths.push_back(bitlength);
+            }
         } else if (string("-t") == argv[i]) {
             if (argc <= i + 1)
             {
@@ -334,10 +357,9 @@ int main(int argc, char** argv) {
 
     CG.computeDepths();
     CG.executable_order();
-   // cout << "max depth " << CG.max_depth << " gates: " << CG.executable.size() << endl;
-   // cout << endl;
-    //CG.defineSubgraphs_test(k,0);
-    //CG.collect_remaining();
+    //CG.gate_statistics();
+    // cout << "max depth " << CG.max_depth << " gates: " << CG.executable.size() << endl;
+  
 
     if(advanced_parallel == true && k > 1){
         CG.defineSubgraphs(k,0);
@@ -414,22 +436,30 @@ int main(int argc, char** argv) {
     const TFheGateBootstrappingParameterSet *params = cloud_key->params;  //retrieving the TFHE parameters from the secret key set.
     fclose(cloud_key_file);
 
-    LweSample* input_registers = new_gate_bootstrapping_ciphertext_array(num_ciphertext * bitlength, params);
-
-    LweSample* temp;
+    LweSample* input_registers  = new_gate_bootstrapping_ciphertext_array(CG.input_length, params);
+    //    input_registers = new_gate_bootstrapping_ciphertext_array(num_ciphertext * bitlength, params);
+    
 
     // read the ciphertexts
+    int previous_inputs = 0;
     for (int i = 0; i<num_ciphertext; i++)
     {
         FILE* in = fopen(input_files[i], "rb");
         if (in == NULL) {throw std::invalid_argument("failed to open ciphertext file");} 
-
+        if(bitlengths.size() != 0){ // if no bitlengths are given, use the same bitlength for all inputs
+            bitlength = bitlengths[i];
+        }
         for (int j = 0; j<bitlength; j++) { 
-            import_gate_bootstrapping_ciphertext_fromFile(in, &input_registers[j + bitlength * i], params);
+            cout << "read bit " << j + previous_inputs << " from file " << i << endl;
+            import_gate_bootstrapping_ciphertext_fromFile(in, &input_registers[j + previous_inputs], params);
           
         }
+        previous_inputs += bitlength;
         fclose(in);
     }   
+
+
+
 
     
     Evaluator evaluator;
@@ -442,6 +472,7 @@ int main(int argc, char** argv) {
     } else {
         evaluator.per_level_parallel(k);
     }
+    
     auto finish = std::chrono::high_resolution_clock::now();
 
     long long interval = std::chrono::duration_cast<std::chrono::microseconds>(finish - begin).count();
