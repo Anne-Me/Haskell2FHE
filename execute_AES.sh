@@ -1,16 +1,15 @@
 #!/bin/bash
 
 # test vectors from NIST: 
-#  plaintext = 0x00112233445566778899AABBCCDDEEFF
-#        key = 0x000102030405060708090A0B0C0D0E0F
-# ciphertext = 0x69c4e0d86a7b0430d8cdb78070b4c55a 
-#
-# The key is expanded to the following key schedule:
-# KeySchedule = 0x0001020304050607  0x08090A0B0C0D0E0F  0xD6AA74FDD2AF72FA 0xDAA678F1D6AB76FE  0xB692CF0B643DBDF1  0xBE9BC5006830B3FE   0xB6FF744ED2C2C9BF  0x6C590CBF0469BF41  0x47F7F7BC95353E03  0xF96C32BCFD058DFD   0x3CAAA3E8A99F9DEB  0x50F3AF57ADF622AA 0x5E390F7DF7A69296  0xA7553DC10AA31F6B  0x14F9701AE35FE28C  0x440ADF4D4EA9C026  0x47438735A41C65B9  0xE016BAF4AEBF7AD2  0x549932D1F0855768  0x1093ED9CBE2C974E  0x13111D7FE3944A17  0xF307A78B4D2B30C5
+#  plaintext = 0x3243f6a8885a308d313198a2e0370734
+#        key = 0x2b7e151628aed2a6abf7158809cf4f3c
+# ciphertext = 0x3925841d02dc09fbdc118597196a0b32
+#first round = 0x193de3bea0f4e22b9ac68d2ae9f84808
 
-./build/keygen 
-./build/encrypt -b 128 -n 1 0x00112233445566778899AABBCCDDEEFF -key secret.key -prefixout ct_in 
-./build/encrypt -n 11 0x000102030405060708090A0B0C0D0E0F  0xD6AA74FDD2AF72FADAA678F1D6AB76FE  0xB692CF0B643DBDF1BE9BC5006830B3FE   0xB6FF744ED2C2C9BF6C590CBF0469BF41  0x47F7F7BC95353E03F96C32BCFD058DFD   0x3CAAA3E8A99F9DEB50F3AF57ADF622AA 0x5E390F7DF7A69296A7553DC10AA31F6B  0x14F9701AE35FE28C440ADF4D4EA9C026  0x47438735A41C65B9E016BAF4AEBF7AD2  0x549932D1F08557681093ED9CBE2C974E  0x13111D7FE3944A17F307A78B4D2B30C5 -b 128 -key secret.key -prefixout ct_key
-./build/clash2tfhe -c tests/programs/AES/AESencrypt.json -n 24 ct_in_0_0.data ct_in_0_1.data ct_key_0_0.data ct_key_0_1.data ct_key_1_0.data ct_key_1_1.data ct_key_2_0.data ct_key_2_1.data ct_key_3_0.data ct_key_3_1.data  ct_key_4_0.data ct_key_4_1.data ct_key_5_0.data ct_key_5_1.data ct_key_6_0.data ct_key_6_1.data ct_key_7_0.data ct_key_7_1.data ct_key_8_0.data ct_key_8_1.data ct_key_9_0.data ct_key_9_1.data ct_key_10_0.data ct_key_10_1.data -out result.data -boot boots.key -b 64 -t 1
+#ct = 0b0011_1001 :> 0b0010_0101 :> 0b1000_0100 :> 0b0001_1101 :> 0b0000_0010 :> 0b1101_1100 :> 0b0000_1001 :> 0b1111_1011 :> 0b1101_1100 :> 0b0001_0001 :> 0b1000_0101 :> 0b1001_0111 :> 0b0001_1001 :> 0b0110_1010 :> 0b0000_1011 :> 0b0011_0010 :> Nil
 
-./build/decrypt -b 128 -key secret.key result.data
+./build/keygen              
+./build/encrypt -b 128 -n 1 0x3243f6a8885a308d313198a2e0370734 -key secret.key -prefixout ct_in
+./build/encrypt -n 11 0x2B7E151628AED2A6ABF7158809CF4F3C 0xA0FAFE1788542CB123A339392A6C7605 0xF2C295F27A96B9435935807A7359F67F 0x3D80477D4716FE3E1E237E446D7A883B 0xEF44A541A8525B7FB671253BDB0BAD00 0xD4D1C6F87c839d87caf2b8bc11f915bc 0x6d88a37a110b3efddbf98641ca0093fd 0x4e54f70e5f5fc9f384a64fb24ea6dc4f 0xead27321b58dbad2312bf5607f8d292f 0xac7766f319fadc2128d12941575c006e 0xd014f9a8c9ee2589e13f0cc8b6630ca6 -b 128 -key secret.key -prefixout ct_key
+./build/clash2tfhe -c tests/programs/AES/aes-one-round-shiftrows.json -n 12 ct_in_0.data ct_key_0.data ct_key_1.data ct_key_2.data ct_key_3.data ct_key_4.data ct_key_5.data ct_key_6.data ct_key_7.data ct_key_8.data ct_key_9.data ct_key_10.data  -out result3.data -boot boots.key -b 128 -t 1
+./build/decrypt -b 128 -key secret.key result3.data

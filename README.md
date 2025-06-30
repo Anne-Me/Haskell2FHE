@@ -63,6 +63,11 @@ The following script runs key generation, encryption of two numbers, evaluation 
 ```
 
 #### AES-128 encryption
+The following script encrypts a plaintext and the expanded keys of a AES-128 KeySchedule and then encrypts the plaintext under FHE. 
+
+```
+./execute_AES.sh
+```
 
 
 #### PIR-100 
