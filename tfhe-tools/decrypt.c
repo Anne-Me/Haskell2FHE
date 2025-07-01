@@ -114,7 +114,7 @@ int main(int argc, char *argv[]) {
                     int bit = bootsSymDecrypt(&ciphertext[j+ k*64], key);
                     plaintext |= ((uint64_t )bit << j);
                 }
-                printf("part %d = 0x%016" PRIx64 "\n", chunks-k, plaintext);
+                printf("part %d = 0x%016" PRIx64 "\n", k, plaintext);
                 print_binary(plaintext);
             }
         }

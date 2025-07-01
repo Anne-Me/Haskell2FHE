@@ -32,7 +32,7 @@ inline GATES convert(std::string gate_str){
     else if(gate_str == "$_XNOR_") return XNOR;
     else if(gate_str == "$_NOR_") return NOR;
     else if(gate_str == "$_NOT_") return NOT;
-    else if(gate_str == "$_ORNOT_") return ORYN;
+    else if(gate_str == "$_ORNOT_") return ORYN; //
     else if(gate_str == "$_MUX_") return MUX;
     else if(gate_str == "AND") return AND;
     else if(gate_str == "XOR") return XOR;

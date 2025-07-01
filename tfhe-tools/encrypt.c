@@ -195,32 +195,36 @@ int main(int argc, char *argv[]) {
                         hexValues[j] = v;
                         //printf("Chunk %d: 0x%016" PRIx64 " (%" PRIu64 ")\n", j, v, v);
                     }
+                    
+                    LweSample *ciphertext = new_gate_bootstrapping_ciphertext_array(b, params);
+                    int previousbits = 0;
                     for (int j = 0; j < chunks; ++j) {
-                        LweSample *ciphertext = new_gate_bootstrapping_ciphertext_array(b, params);
                         uint64_t plaintext = hexValues[j]; // normal order
-                        printf("Encrypting = 0x%016" PRIx64 " in ct %s_%d_%d \n", plaintext, prefixout, i,j);
+                        printf("Encrypting = 0x%016" PRIx64 " in ct %s_%d \n", plaintext, prefixout, i);
                         for (int k = 0; k < 64; k++) {
                             int bit = (plaintext >> k) & 1;
-                            encrypt_bit(&ciphertext[k], bit, sk);
+                            encrypt_bit(&ciphertext[k+previousbits], bit, sk);
                         }
-
-                        char filename[256];
-                        sprintf(filename, "%s_%d_%d.data",prefixout, i,j);
-                        FILE *ciphertext_file = fopen(filename, "wb");
-                        if (ciphertext_file == NULL) {
-                            perror("Failed to open ciphertext file");
-                            return 1;
-                        }
-
-                        for (int j = 0; j < b; j++) {
-                            export_gate_bootstrapping_ciphertext_toFile(ciphertext_file, &ciphertext[j], params);
-                        }
-
-                        fclose(ciphertext_file);
-
-                        delete_gate_bootstrapping_ciphertext_array(b, ciphertext);
-                            
+                        previousbits += 64;
                     }
+                    printf("b: %d, encryptedbits: %d\n", b, previousbits);
+
+                    char filename[256];
+                    sprintf(filename, "%s_%d.data",prefixout, i);
+                    FILE *ciphertext_file = fopen(filename, "wb");
+                    if (ciphertext_file == NULL) {
+                        perror("Failed to open ciphertext file");
+                        return 1;
+                    }
+
+                    for (int j = 0; j < b; j++) {
+                        export_gate_bootstrapping_ciphertext_toFile(ciphertext_file, &ciphertext[j], params);
+                    }
+
+                    fclose(ciphertext_file);
+
+                    delete_gate_bootstrapping_ciphertext_array(b, ciphertext);
+                            
                     free(hexValues);
                 }
             }

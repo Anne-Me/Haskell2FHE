@@ -4,8 +4,48 @@
 #include <vector>
 #include <stack>
 #include <string>
+#include <tfhe/tfhe.h>
+#include <tfhe/tfhe_io.h>
 
 #include "circuitgraph_tests.h"
+
+
+void testSingleGate(){
+    int minimum_lambda = 128; // default
+    uint32_t seed[] = { 325, 3348, 84982 };
+    TFheGateBootstrappingParameterSet* params = new_default_gate_bootstrapping_parameters(minimum_lambda);
+
+    //generate a random key
+
+    tfhe_random_generator_setSeed(seed,3);
+    TFheGateBootstrappingSecretKeySet* key = new_random_gate_bootstrapping_secret_keyset(params);
+
+    const TFheGateBootstrappingCloudKeySet *bk = &key->cloud;
+
+    LweSample *ciphertext = new_gate_bootstrapping_ciphertext_array(5, params);
+
+    bootsSymEncrypt(&ciphertext[0], 0, key);
+    bootsSymEncrypt(&ciphertext[1], 1, key);
+
+    bootsSymEncrypt(&ciphertext[2], 0, key);
+    bootsSymEncrypt(&ciphertext[3], 1, key);
+
+    bootsXOR(&ciphertext[4], &ciphertext[0], &ciphertext[1], bk);
+    int bit = bootsSymDecrypt(&ciphertext[4], key);
+    std::cout << "0 x 1 = " << bit << std::endl;
+
+    bootsXOR(&ciphertext[4], &ciphertext[0], &ciphertext[2], bk);
+    bit = bootsSymDecrypt(&ciphertext[4], key);
+    std::cout << "0 x 0 = " << bit << std::endl;
+
+    bootsXOR(&ciphertext[4], &ciphertext[1], &ciphertext[3], bk);
+    bit = bootsSymDecrypt(&ciphertext[4], key);
+    std::cout << "1 x 1 = " << bit << std::endl;
+
+    bootsXOR(&ciphertext[4], &ciphertext[1], &ciphertext[2], bk);
+    bit = bootsSymDecrypt(&ciphertext[4], key);
+    std::cout << "1 x 0 = " << bit << std::endl;
+}
 
 void createSimpleCircuit(){
     CircuitGraph graph1 = CircuitGraph(7);

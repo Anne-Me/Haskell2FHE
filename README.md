@@ -2,6 +2,8 @@
 
 The compiler takes Haskell programs and transforms them into Boolean circuits using Clash and Yosys. Then the program evaluated using the tfhe library. You can evaluate the program in parallel using any number of threads by specifying the thread parameter.
 
+## Instsall
+
 ### Step 1: Clone and Compile tfhe
 Install build tools.
 
@@ -32,7 +34,7 @@ cd ../..
 At this point you can already execute the example programs using precompiled circuits (see "Executing Examples") and you can run programs in Bristol Fashion format or programs that were created by the tojson command in Yosys.
 
 ### Step 3: Install Clash
-install clash https://clash-lang.org/ 
+install clash https://clash-lang.org/install/linux
 
 
 ### Step 4: Install Yosys
@@ -52,7 +54,7 @@ cd ..
 ```
 
 
-### Executing Examples
+## Executing Examples
 
 #### Addition of 64-bit numbers
 
@@ -74,15 +76,42 @@ The following script encrypts a plaintext and the expanded keys of a AES-128 Key
 The following script creates a dummy database which encrypts values 0 to 99 as 32 bit integers and a query integer. Then it evaluates PIR homomorphically using 5 parallel threads and decrypts the output. 
 
 ```
-./executePIR100.sh 
+./execute_PIR100.sh 
 ```
 
 
-### Compile Haskell program into FHE compatible boolean circuit
+## Creating your own Haskell program and compiling it into a circuit
 
-TODO: add explanation
+#### Encryption of Inputs
 
-### Now you can create your ciphertexts and run the program
+Create a secret key and a bootstrapping by using the keygen tool. Optionally specifiy a security parameter (default = 128) and a seed. It creates the files cloud.key and secret.key. 
+Then encrypt your messages using the encrypt tool. It takes the parameters -b followed by the bitlength of your messages, -n followed by the the number of messages and then the messages itself, -key followed by the secret.key file, and -prefixout followed by a prefix for the ciphertext. The tool creates ciphertext files ct_in_0.data and counting. 
+For messages of 128 bitlength and more the input is expected in hex format, the option -reverse can be given to encrypt the bits in reverse order. 
 
-TODO: add explanation
+```
+./build/keygen -lambda 128 -seed 571           
+./build/encrypt -b 32 -n 2 25 70 -key secret.key -prefixout ct_in
+```
+
+#### Compiling and Running the program
+
+Run the compilation tool that takes as input the program and a filename for the compiled circuit. 
+
+```
+./compile.sh tests/programs/ADD/add_32bit.hs tests/programs/ADD/add_32bit.json
+```
+
+The evaluation tool takes as input -c and the circuitfile, -n followed by the number of inputfiles and then the inputfiles themselves, -out and a file name for the result ciphertext, -b and the bitlength of the inputs or -bb and multiple numbers indicating the length of each input, -boot and the boostrapping key file, optionally -t and the number of threads to use.
+
+```
+./build/clash2tfhe -c tests/programs/ADD/add_32bit.json -n 2 ct_in_0.data ct_in_1.data -out result.data -boot boots.key -b 32 
+```
+
+#### Decryption
+
+The decryption tool takes arguments -b and the bitlength, -key and the secret key file, and one or multiple ciphertexts.
+
+```
+./build/decrypt -b 32 -key secret.key result.data
+```
 

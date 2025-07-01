@@ -327,7 +327,7 @@ int main(int argc, char** argv) {
         } else if (string("-subcircuits") == argv[i]){
             advanced_parallel = true;
         } else if (string("-test") == argv[i]){
-            createSimpleCircuitReuseThreads();
+            testSingleGate();
             return 0;
         } else if (string("-print") == argv[i]){
             print = true;
@@ -450,7 +450,7 @@ int main(int argc, char** argv) {
             bitlength = bitlengths[i];
         }
         for (int j = 0; j<bitlength; j++) { 
-            cout << "read bit " << j + previous_inputs << " from file " << i << endl;
+            //cout << "read bit " << j << "of " << j + previous_inputs << " from file " << i << endl;
             import_gate_bootstrapping_ciphertext_fromFile(in, &input_registers[j + previous_inputs], params);
           
         }
