@@ -9,6 +9,12 @@ build/*
 
 .vscode/*
 
+# clash
+my-clash-project/*
+circuit.json
+hie.yaml
+stack.yaml
+
 # Prerequisites
 *.d
 

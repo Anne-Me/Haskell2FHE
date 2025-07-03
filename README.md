@@ -2,7 +2,7 @@
 
 The compiler takes Haskell programs and transforms them into Boolean circuits using Clash and Yosys. Then the program evaluated using the tfhe library. You can evaluate the program in parallel using any number of threads by specifying the thread parameter.
 
-## Instsall
+## Install
 
 ### Step 1: Clone and Compile tfhe
 Install build tools.
@@ -95,10 +95,18 @@ For messages of 128 bitlength and more the input is expected in hex format, the 
 
 #### Compiling and Running the program
 
-Run the compilation tool that takes as input the program and a filename for the compiled circuit. 
+Setup a new Haskell project using stack, the command below creates the example project simple from Clash in the my-clash-project directory.
 
 ```
-./compile.sh tests/programs/ADD/add_32bit.hs tests/programs/ADD/add_32bit.json
+stack new my-clash-project clash-lang/simple
+```
+
+Edit the source file my-clash-project/src/Example/Project.hs to contain your code. Don't remove the function topEntity. Clash expects this to be the entry point to your program.
+
+Run the compilation tool that takes as input the program and a filename for the compiled circuit. If you changed the module name from Example.Project to something new, also provide the new module name. The first compilation will take additional time for setup.
+
+```
+./compile.sh my-clash-project/src/Example/Project.hs circuit.json [-module modulename]
 ```
 
 The evaluation tool takes as input -c and the circuitfile, -n followed by the number of inputfiles and then the inputfiles themselves, -out and a file name for the result ciphertext, -b and the bitlength of the inputs or -bb and multiple numbers indicating the length of each input, -boot and the boostrapping key file, optionally -t and the number of threads to use.
