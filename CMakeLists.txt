@@ -4,7 +4,7 @@ project(clash2tfhe)
 
 # Allow overriding TFHE installation prefix; defaults to /usr/local
 if(NOT DEFINED TFHE_PREFIX)
-    set(TFHE_PREFIX "/usr/local" CACHE PATH "Prefix for TFHE installation")
+    set(TFHE_PREFIX "/usr/local" CACHE PATH "Prefix for TFHE installation" FORCE)
 endif()
 
 # Set C++ standard
@@ -25,12 +25,14 @@ link_directories("${TFHE_PREFIX}/lib")
 #    set(NLOHMANN_JSON_DIR CMAKE_CURRENT_LIST_DIR)
 #endif()
 
+option(ENABLE_TESTING "Enable unit tests" ON)
+#set(TFHE_PREFIX ${TFHE_PREFIX} PARENT_SCOPE)
+
 
 set(SOURCES
     main.cpp
     Evaluator.cpp
     CircuitGraph.cpp
-    tests/circuitgraph_tests.cpp
 )
 
 add_executable(clash2tfhe ${SOURCES})
@@ -54,3 +56,9 @@ target_include_directories(decrypt PRIVATE ${TFHE_PREFIX}/include)
 target_link_libraries(keygen tfhe-spqlios-fma)
 target_link_libraries(encrypt tfhe-spqlios-fma)
 target_link_libraries(decrypt tfhe-spqlios-fma)
+
+# add tests if required
+if(ENABLE_TESTING)
+    enable_testing()
+    add_subdirectory(tests)
+endif()

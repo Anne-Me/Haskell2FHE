@@ -9,7 +9,7 @@
 #include <tfhe/tfhe.h>
 #include <tfhe/tfhe_io.h>
 
-#include "tests/circuitgraph_tests.h"
+//#include "tests/circuitgraph_tests.h"
 
 #include "Evaluator.h"
 #include "CircuitGraph.h"
@@ -327,7 +327,7 @@ int main(int argc, char** argv) {
         } else if (string("-subcircuits") == argv[i]){
             advanced_parallel = true;
         } else if (string("-test") == argv[i]){
-            testSingleGate();
+           // testSingleGate();
             return 0;
         } else if (string("-print") == argv[i]){
             print = true;
