@@ -23,6 +23,10 @@ void Evaluator::init(CircuitGraph* CG, const TFheGateBootstrappingCloudKeySet* k
     //cout << "input length: " << length_input << " output length: " << length_output << " working length: " << length_working << endl;
 }
 
+/*
+* takes as input the number of threads and iterates over each alyer of the circuit until max depth is reached
+* per layer splits the gates in that layer into num_threads many subcircuits and starts concurrent threads
+*/
 void Evaluator::per_level_parallel(int num_threads){
     for (int i = 0; i <= CG->max_depth; i++) {
         CG->split_level(num_threads, i);
@@ -30,8 +34,8 @@ void Evaluator::per_level_parallel(int num_threads){
         threads.reserve(num_threads);
         //cout << "evaluating level: " << i << " with " << CG->subgraphs.size() << " subgraphs" << std::endl;
         if(num_threads> 1){ 
-            for (int i = 0; i < num_threads; ++i) {
-                threads.emplace_back(&Evaluator::evaluate_subgraph,this, i);
+            for (int j = 0; j < num_threads; ++j) {
+                threads.emplace_back(&Evaluator::evaluate_subgraph,this, j);
             }
             // wait for threads
             for (auto& t : threads) {
@@ -46,6 +50,10 @@ void Evaluator::per_level_parallel(int num_threads){
 
 }
 
+
+/*
+* deprecated
+*/
 void Evaluator::parallel_evaluate(int num_threads){
     if (CG->subgraphs.size() == 0 || num_threads == 1) {
     // do single threaded stuff

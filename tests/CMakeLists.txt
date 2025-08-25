@@ -24,6 +24,7 @@ add_executable(unit_tests
 
 target_link_libraries(unit_tests PRIVATE
   gtest_main
+  gmock
   clash2tfhe_lib       
 )
 
