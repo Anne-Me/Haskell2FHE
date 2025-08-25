@@ -11,14 +11,11 @@ endif()
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED OFF)
 
-# Only add /permissive- if MSVC is the compiler
-if (MSVC)
-    target_compile_options(clash2tfhe PRIVATE /permissive-)
-endif()
+
 
 # Include and link directories for TFHE
 #include_directories("${TFHE_PREFIX}/include")
-link_directories("${TFHE_PREFIX}/lib")
+#link_directories("${TFHE_PREFIX}/lib")
 
 #find_package(nlohmann_json 3.2.0 REQUIRED)
 #if (NOT DEFINED NLOHMANN_JSON_DIR)
@@ -28,21 +25,38 @@ link_directories("${TFHE_PREFIX}/lib")
 option(ENABLE_TESTING "Enable unit tests" ON)
 #set(TFHE_PREFIX ${TFHE_PREFIX} PARENT_SCOPE)
 
-
-set(SOURCES
-    main.cpp
+add_library(clash2tfhe_lib
     Evaluator.cpp
     CircuitGraph.cpp
 )
 
-add_executable(clash2tfhe ${SOURCES})
-target_include_directories(clash2tfhe 
-    PRIVATE 
-    "${NLOHMANN_JSON_DIR}"
+# Only add /permissive- if MSVC is the compiler
+if (MSVC)
+    target_compile_options(clash2tfhe PRIVATE /permissive-)
+    target_compile_options(clash2tfhe_lib PRIVATE /permissive-)
+endif()
+
+#set(SOURCES
+#    main.cpp
+#    Evaluator.cpp
+#    CircuitGraph.cpp
+#)
+# add_executable(clash2tfhe ${SOURCES})
+#target_link_libraries(clash2tfhe PRIVATE tfhe-spqlios-fma)
+
+target_include_directories(clash2tfhe_lib 
+    PUBLIC 
+    ${PROJECT_SOURCE_DIR}
+    ${TFHE_PREFIX}/include
+    #"${NLOHMANN_JSON_DIR}"
     "${CMAKE_SOURCE_DIR}/nlohmann"
 )
 
-target_link_libraries(clash2tfhe PRIVATE tfhe-spqlios-fma)
+target_link_directories(clash2tfhe_lib PUBLIC ${TFHE_PREFIX}/lib)
+target_link_libraries(clash2tfhe_lib PUBLIC tfhe-spqlios-fma)
+
+add_executable(clash2tfhe main.cpp)
+target_link_libraries(clash2tfhe PRIVATE clash2tfhe_lib)
 
 # TFHE TOOLS
 add_executable(keygen tfhe-tools/keygen.c)
