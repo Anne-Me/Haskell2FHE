@@ -5,6 +5,8 @@
 #include <stack>
 #include <string>
 #include <stdexcept>
+#include <unordered_map>
+#include <stack>
 
 enum GATES{
     AND,
@@ -129,6 +131,9 @@ class CircuitGraph
 
     void recomputeDepths();
     void reset_depths_from_layer(int d);
+
+    void recurseTopologicalSorting(std::unordered_map<int,bool> &visited, std::stack<int> &sorted, int id);
+    void topologicalSorting();
 
     void defineSubgraphs(int num_THreads, int p);
 

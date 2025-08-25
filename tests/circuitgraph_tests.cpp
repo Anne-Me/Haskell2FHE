@@ -4,8 +4,8 @@
 
 TEST(CircuitGraphTest, Simple_depths) {
     CircuitGraph graph1(7);
-        std::cout << "created graph" << std::endl;
-
+    graph1.input_length = 0;
+    graph1.output_length = 0;
 
     std::vector<int> no_parents;
     graph1.set_gate(0, GATES::AND,  no_parents, 0);
@@ -15,7 +15,6 @@ TEST(CircuitGraphTest, Simple_depths) {
     graph1.set_gate(4, GATES::AND,  std::vector<int>{0,1}, 4);
     graph1.set_gate(5, GATES::AND,  std::vector<int>{2,3}, 5);
     graph1.set_gate(6, GATES::AND,  std::vector<int>{4,5}, 6);
-    std::cout << "set gates" << std::endl;
 
     // add child edges 
     graph1.addChild(0,4);
@@ -25,13 +24,8 @@ TEST(CircuitGraphTest, Simple_depths) {
     graph1.addChild(4,6);
     graph1.addChild(5,6);
 
-        std::cout << "add children" << std::endl;
-
-
-    // ----- computeDepths -----
-    graph1.computeDepths();
-
-        std::cout << "computed depths" << std::endl;
+    // computeDepths 
+    graph1.topologicalSorting();
 
 
     EXPECT_EQ(graph1.gates[0].depth, 0);

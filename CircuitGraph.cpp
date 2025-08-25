@@ -70,6 +70,41 @@ void CircuitGraph::addChild(int id, int cildId){
     gates[id].children.push_back(cildId);
 }
 
+
+void CircuitGraph::topologicalSorting(){
+    std::vector<int> sorting;
+    std::unordered_map<int, bool> visited;
+    std::stack<int> sorted;
+    for(int i = input_length; i < gates.size(); i++){ // skip inputs, input depth is already set to -1
+        if(visited[i] == true) continue;
+        recurseTopologicalSorting(visited, sorted,i);
+    }
+    
+    while(sorted.empty() == false){
+        int next_gate = sorted.top();
+        sorted.pop();
+        executable.push_back(next_gate);
+        int d = 0;
+        for (int j = 0; j < gates[next_gate].parents.size(); j++){
+            int p = gates[next_gate].parents[j];
+            if(gates[p].depth >= d){
+                d = gates[p].depth+1;
+            }
+        }
+        gates[next_gate].depth = d;
+        if(max_depth < d) max_depth = d;
+    }
+}
+
+void CircuitGraph::recurseTopologicalSorting(std::unordered_map<int,bool> &visited, std::stack<int> &sorted, int id){
+    if(visited[id] == true) return;
+    for(int i = 0; i < gates[id].children.size(); i++){
+        recurseTopologicalSorting(visited, sorted, gates[id].children[i]);
+    }
+    visited[id] = true;
+    sorted.push(id);
+}
+
 void CircuitGraph::computeDepths(){
     int depth = 0;
     int max_depth = 0;
