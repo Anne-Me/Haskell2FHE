@@ -51,49 +51,6 @@ void Evaluator::per_level_parallel(int num_threads){
 }
 
 
-/*
-* deprecated
-*/
-void Evaluator::parallel_evaluate(int num_threads){
-    if (CG->subgraphs.size() == 0 || num_threads == 1) {
-    // do single threaded stuff
-    /*
-        int first_gate = length_input + length_output; // first gate is the first working register
-
-        for (int i = first_gate; i < CG->gates.size(); i++) {
-            evaluate_gate(i);
-            //cout << "evaluated gate: " << i << " of " << CG->gates.size() << " type " << to_string(CG->gates[i].type) << std::endl;
-        }
-        */
-        for(int i = 0; i < CG->executable.size(); i++){
-            int gate_id = CG->executable[i];
-            evaluate_gate(gate_id);
-          //  cout << "evaluated gate: " << gate_id << " of " << CG->executable.size() << " type " << to_string(CG->gates[gate_id].type) << std::endl;
-        }
-        //cout << "done evaluating whole circuit." << std::endl;
-        return;
-    }
-    if (num_threads >= CG->subgraphs.size()) {
-        cout << " not using optimally many threads, using " << CG->subgraphs.size() << " threads instead of " << num_threads << std::endl;
-        num_threads = CG->subgraphs.size();
-    } 
-    // do multi-thread stuff
-    vector<std::thread> threads;
-    threads.reserve(num_threads);
-
-    for (int i = 0; i < num_threads; ++i) {
-        threads.emplace_back(&Evaluator::evaluate_subgraph,this, i);
-    }
-    // wait for threads
-    for (auto& t : threads) {
-        if (t.joinable()) {
-            t.join();
-        }
-    }
-    
-    // execute remaining gates
-    evaluate_subgraph(num_threads);
-}
 
 void Evaluator::evaluate_subgraph(int t){
     for (auto gate_id : CG->subgraphs[t].gates) {  

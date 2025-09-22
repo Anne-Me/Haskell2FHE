@@ -230,7 +230,6 @@ int main(int argc, char** argv) {
     bool print = false;
     bool eval = true;
     bool reuse_threads = true;
-    bool advanced_parallel = false; // if true, the circuit is split into subgraphs
     string format = "json"; 
 
     for (int i = 1; i < argc; ++i)
@@ -317,8 +316,6 @@ int main(int argc, char** argv) {
                 return -1;
             }
             k = atoi(argv[++i]);
-        } else if (string("-subcircuits") == argv[i]){
-            advanced_parallel = true;
         } else if (string("-test") == argv[i]){
            // testSingleGate();
             return 0;
@@ -348,19 +345,11 @@ int main(int argc, char** argv) {
     }
 
 
-    CG.computeDepths();
-    CG.executable_order();
+    CG.topologicalSorting();
+
     //CG.gate_statistics();
     // cout << "max depth " << CG.max_depth << " gates: " << CG.executable.size() << endl;
   
-
-    if(advanced_parallel == true && k > 1){
-        CG.defineSubgraphs(k,0);
-        cout << "defined subgraphs" << endl;
-        
-        CG.collect_remaining();
-        cout << "remaining gates: " << CG.subgraphs[k].gates.size() << endl;
-    }
     
     if (!eval) {
         cout << "Not evaluating, exit" << endl;
@@ -410,11 +399,8 @@ int main(int argc, char** argv) {
     evaluator.init(&CG, cloud_key, params, input_registers);
     auto begin = std::chrono::high_resolution_clock::now();
 
-    if(advanced_parallel == true && k > 1){
-        evaluator.parallel_evaluate(k); 
-    } else {
-        evaluator.per_level_parallel(k);
-    }
+    evaluator.per_level_parallel(k);
+    
     
     auto finish = std::chrono::high_resolution_clock::now();
 
