@@ -38,13 +38,13 @@ void read_json_to_Circuit(string circuitpath, CircuitGraph &CG){
         } else if(el.value()["direction"] == "output"){
             result_length +=  el.value()["bits"].size();
         } else {
-            cout << "Unknoen port type: " << el.value()["direction"] << endl;
+            cout << "Unknown port type: " << el.value()["direction"] << endl;
         }
     }
 
     int num_gates = data["modules"]["topEntity"]["cells"].size();
 
-    cout << "input_length: " << input_length << " result_length: " << result_length << " gates: " << num_gates << endl;
+    //cout << "input_length: " << input_length << " result_length: " << result_length << " gates: " << num_gates << endl;
     
     CG.input_length = input_length;
     CG.output_length = result_length;
@@ -147,7 +147,7 @@ void read_bristol_to_Circuit(string circuitpath, CircuitGraph &CG){
         output_length += temp;
     }
 
-    cout << "input_length: " << input_length << " result_length: " << output_length << " gates: " << num_gates << endl;
+    //cout << "input_length: " << input_length << " result_length: " << output_length << " gates: " << num_gates << endl;
 
     CG.input_length = input_length;
     CG.output_length = output_length;
@@ -190,14 +190,6 @@ void read_bristol_to_Circuit(string circuitpath, CircuitGraph &CG){
         try
             {  
                 CG.set_gate(out, gate_type, parents, out);
-                /*
-                if (out % 20 == 0){
-                    cout << "set gate: " << out << " type: " << to_string(gate_type) << " parents " << CG.gates[out].parents[0];
-                    if(CG.gates[out].parents.size() > 1){
-                        cout  <<" " << CG.gates[out].parents[1] << endl;
-                    } else {cout << endl;}
-                    
-                }*/
             }
             catch(const std::exception& e)
             {                    
@@ -209,7 +201,7 @@ void read_bristol_to_Circuit(string circuitpath, CircuitGraph &CG){
 }
 
 void printerror(){
-    std::cerr << "Usage: ./clash2tfhe -c jsoncircuitfile -n n a0 a1 .. a7 b1 b2 .. b7 -b bitlength [-t threads] -boot bootstrappingkey -out outfile " << std::endl;
+    std::cerr << "Usage: ./clash2tfhe -cjson circuitfile -n n a0 a1 .. a7 b1 b2 .. b7 -b bitlength [-t threads] -boot bootstrappingkey -out outfile " << std::endl;
     // -bb for giving a bitlength per input -bb 8 8 1 Number of numbers after -bb needs to match n
     // optinall add -print for printing
     // -test for testing only
@@ -243,14 +235,14 @@ int main(int argc, char** argv) {
 
     for (int i = 1; i < argc; ++i)
     {
-        if (string("-c") == argv[i]){
+        if (string("-cjson") == argv[i]){
             if (argc <= i + 1){
                 printerror();
                 return -1;
             }
             format = "json";
             circuitpath = string(argv[++i]);
-            cout << "circuit path: " << circuitpath << endl;
+            cout << "Evaluating: " << circuitpath << endl;
         }
 
         else if (string("-cbristol") == argv[i]){
@@ -260,6 +252,7 @@ int main(int argc, char** argv) {
             }
             format = "bristol";
             circuitpath = string(argv[++i]);
+            cout << "Evaluating: " << circuitpath << endl;
         }
         
 
@@ -366,59 +359,9 @@ int main(int argc, char** argv) {
         cout << "defined subgraphs" << endl;
         
         CG.collect_remaining();
-        if (print == true){
-            CG.write_subgraphs("splitAES");
-        }
         cout << "remaining gates: " << CG.subgraphs[k].gates.size() << endl;
     }
-    /*
     
-    
-    if (k > 1){
-        CG.defineSubgraphs_test(k,0);
-        for (int i = 0; i < k; i++){
-            cout << "subgraph " << i << " has " << CG.subgraphs[i].gates.size() << " gates" << endl;
-        }
-
-        CG.collect_remaining();
-        cout << "remaining gates: " << CG.subgraphs[k].gates.size() << endl;
-        
-      //  CG.depth_statistics_subgraphs("AESencryption_stats_10_subgraphs.txt", std::vector<int>{0,1,2,3,4,5,6,7,8,9,10});
-        if(!reuse_threads == true){ // !!!!!!!! turned off
-            // while the remaining gates are more than 1000
-            int i = 0;
-            int max_depth_sg = 0;
-            vector<int> sg_ind;
-            for(int a = 0; a < k; a++){
-             sg_ind.push_back(a); // vector of subgraph ids that are used for depth statistics
-            }
-            while(max_depth_sg < CG.max_depth){//while(CG.subgraphs[CG.subgraphs.size()-1].gates.size() > 1000){
-                i++;
-                int previous = CG.subgraphs.size() -1;
-                // evaluate all gates until the max depth that was reached
-                max_depth_sg = CG.depth_statistics_subgraphs("",sg_ind);
-                cout << "max depth of subgraphs: " << max_depth_sg << endl;
-                CG.reset_depths_from_layer(max_depth_sg);
-                // CG.recomputeDepths(); other tactic
-                CG.defineSubgraphs_test(k,previous);
-                for (int j = previous; j < previous+k; j++){
-                    cout << "subgraph " << i << " has " << CG.subgraphs[j].gates.size() << " gates" << endl;
-                    sg_ind.push_back(j);
-                }
-                cout << "adding execution layer " << CG.subgraphs.size() << endl;
-                CG.collect_remaining();
-            }
-            CG.depth_statistics_subgraphs("splittingAES"+k,sg_ind);
-        }
-
-        if(print == true){
-            //CG.write_subgraphs("splitPIR3ways"); 
-            cout << "no writing" << endl;
-        }
-
-        cout << "Splitting done" << endl;
-    }
-    */
     if (!eval) {
         cout << "Not evaluating, exit" << endl;
         return 0;

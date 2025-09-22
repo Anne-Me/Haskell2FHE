@@ -44,8 +44,7 @@ int main(int argc, char *argv[]) {
                 return 0;
             }
             n_index = i+2;
-            //printf("n_index: %d\n",n_index);
-            i++;  /* Skip past the integer we just consumed */
+            i++;  // Skip past the integer we just read 
         }
         else if (strcmp(argv[i], "-b") == 0) {
             if (i + 1 >= argc) {
@@ -105,7 +104,8 @@ int main(int argc, char *argv[]) {
                 LweSample *ciphertext = new_gate_bootstrapping_ciphertext_array(b, params);
 
                 for (int j = 0; j < b; j++) {
-                    int bit = (plaintext >> j) & 1;
+                    int bit = (plaintext >> j) & 1; // LSB first ordering
+                    // printf("%d",bit); 
                     encrypt_bit(&ciphertext[j], bit, sk);
                 }
 
@@ -116,7 +116,7 @@ int main(int argc, char *argv[]) {
                     perror("Failed to open ciphertext file");
                     return 1;
                 }
-                printf("Encrypting = %ld in ct %s_%d \n", plaintext, prefixout, i);
+                printf("Encrypting = %lu in ct %s_%d \n", plaintext, prefixout, i);
 
 
                 for (int j = 0; j < b; j++) {
@@ -127,14 +127,14 @@ int main(int argc, char *argv[]) {
 
                 delete_gate_bootstrapping_ciphertext_array(b, ciphertext);
             } else { // if b > 64 then input is expected in hex
-                    if(reverse == 1){ // reverse order of bits for bristol format
+                    if(reverse == 0){  // Standard: LSB first
                         char *hexStr = argv[n_index+i];
                         if ((hexStr[0] == '0') && (hexStr[1] == 'x' || hexStr[1] == 'X')) {
                             hexStr += 2;
                         }
                         size_t len = strlen(hexStr);
                         size_t chunks = (len + 15) / 16;
-                        printf("chunks: %ld , stringlength %ld\n", chunks, len);
+                        //printf("chunks: %ld , stringlength %ld\n", chunks, len);
                         size_t totalLen = chunks * 16;
                         if(totalLen != len) {
                             fprintf(stderr, "Error: Hexadecimal input must be a multiple of 16 characters.\n");
@@ -146,47 +146,52 @@ int main(int argc, char *argv[]) {
                             memcpy(buf, hexStr+ j * 16, 16);
                             uint64_t v = strtoull(buf, NULL, 16);
                             hexValues[j] = v;
-                            printf("Chunk %d: 0x%016" PRIx64 "\n", j, v);
+                            //printf("Chunk %d: 0x%016" PRIx64 "\n", j, v);
                         }
+                        LweSample *ciphertext = new_gate_bootstrapping_ciphertext_array(b, params);
+                        
+                        int previousbits = 0;
                         for (int j = 1; j <= chunks; ++j) {
-                            LweSample *ciphertext = new_gate_bootstrapping_ciphertext_array(64, params); //b
                             uint64_t plaintext = hexValues[chunks-j]; // start with last chunk to preserve LSB ordering
-                            printf("Encrypting = 0x%016" PRIx64 " in ct %s_%d_%d \n", plaintext, prefixout, i,j-1);
+                            printf("Encrypting = 0x%016" PRIx64 " in ct %s_%d \n", plaintext, prefixout, i);
                             for (int k = 0; k < 64; k++) {
-                                int bit = (plaintext >> (63-k)) & 1;
-                                encrypt_bit(&ciphertext[k], bit, sk);
+                                int bit = (plaintext >> k) & 1; 
+                                //printf("%d",bit);
+                                encrypt_bit(&ciphertext[k+previousbits], bit, sk);
                             }
+                            previousbits += 64;
 
-                            char filename[256];
-                            sprintf(filename, "%s_%d_%d.data",prefixout, i,j);
-                            FILE *ciphertext_file = fopen(filename, "wb");
-                            if (ciphertext_file == NULL) {
-                                perror("Failed to open ciphertext file");
-                                return 1;
-                            }
+                        }
 
-                            for (int j = 0; j < 64; j++) { //b
-                                export_gate_bootstrapping_ciphertext_toFile(ciphertext_file, &ciphertext[j], params);
-                            }
+                    char filename[256];
+                    sprintf(filename, "%s_%d.data",prefixout, i);
+                    FILE *ciphertext_file = fopen(filename, "wb");
+                    if (ciphertext_file == NULL) {
+                        perror("Failed to open ciphertext file");
+                        return 1;
+                    }
 
-                            fclose(ciphertext_file);
+                    for (int j = 0; j < b; j++) {
+                        export_gate_bootstrapping_ciphertext_toFile(ciphertext_file, &ciphertext[j], params);
+                    }
 
-                            delete_gate_bootstrapping_ciphertext_array(64, ciphertext);
-                                
-                            }
-                        free(hexValues);
-                } else {
+                    fclose(ciphertext_file);
+
+                    delete_gate_bootstrapping_ciphertext_array(b, ciphertext);
+                } else { // MSB
                     char *hexStr = argv[n_index+i];
                     if ((hexStr[0] == '0') && (hexStr[1] == 'x' || hexStr[1] == 'X')) {
                         hexStr += 2;
                     }
                     size_t len = strlen(hexStr);
-                    size_t chunks = (len + 15) / 16;
+                    size_t chunks = (len + 15) / 16; 
                     size_t totalLen = chunks * 16;
                     if(totalLen != len) {
                         fprintf(stderr, "Error: Hexadecimal input must be a multiple of 16 characters.\n");
                         return 1;
                     }
+
+
                     uint64_t *hexValues = malloc(chunks * sizeof(uint64_t));
                     for (int j = 0; j < chunks; ++j) {
                         char buf[17] = {0};
@@ -201,13 +206,14 @@ int main(int argc, char *argv[]) {
                     for (int j = 0; j < chunks; ++j) {
                         uint64_t plaintext = hexValues[j]; // normal order
                         printf("Encrypting = 0x%016" PRIx64 " in ct %s_%d \n", plaintext, prefixout, i);
-                        for (int k = 0; k < 64; k++) {
+                        for (int k = 63; k >= 0; k--) { // this is reversed
                             int bit = (plaintext >> k) & 1;
-                            encrypt_bit(&ciphertext[k+previousbits], bit, sk);
+                            //printf("%d",bit);
+                            encrypt_bit(&ciphertext[63-k+previousbits], bit, sk);
                         }
                         previousbits += 64;
                     }
-                    printf("b: %d, encryptedbits: %d\n", b, previousbits);
+                    //printf("b: %d, encryptedbits: %d\n", b, previousbits);
 
                     char filename[256];
                     sprintf(filename, "%s_%d.data",prefixout, i);

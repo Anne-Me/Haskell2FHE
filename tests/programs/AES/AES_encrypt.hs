@@ -261,40 +261,31 @@ rotWord w =
 
 -- | XOR in one round-key (4 words) into the State
 addRoundKeyWith
-  :: Vec 4 (BitVector 32)
-  -> Vec 4 (BitVector 32)
-  -> Vec 4 (BitVector 32)
-addRoundKeyWith ws rk =  (zipWith xor ws rk)
+  :: BitVector 128
+  -> BitVector 128
+  -> BitVector 128
+addRoundKeyWith a b = a `xor` b
 
 -- | AES-128 single-block encrypt
 aesBlockEncrypt
-  :: Vec 4 (BitVector 32)   -- 16 bytes
-  -> Vec 11 (Vec 4 (BitVector 32))         -- 44 bytes
-  -> Vec 4 (BitVector 32)  -- 16 bytes
+  :: BitVector 128   -- 16 bytes
+  -> Vec 11 (BitVector 128)         -- 44 bytes
+  -> BitVector 128  -- 16 bytes
 aesBlockEncrypt pt allKs = finalState
-    --state0
+--finalState
   where
-    -- 1) expand to 11 round-keys × 4 words = 44 words
-     --KeySchedule allKs = nistKeyExpand key
-
-    -- 2) split into 11 round-keys
-    --roundKeys :: Vec 11 (Vec 4 (BitVector 32))
-    --roundKeys = unconcat d4 allKs
-       --unconcat @4 :: Vec 44 a -> Vec 11 (Vec 4 a)
-
-    -- 3) initial AddRoundKey (round 0)
+    -- initial AddRoundKey (round 0)
     state0 = addRoundKeyWith pt (allKs !! 0)
 
-    -- 4) rounds 1..9: SubBytes → ShiftRows → MixColumns → AddRoundKey
-    midState :: Vec 4 (BitVector 32)
+    --rounds 1..9: SubBytes → ShiftRows → MixColumns → AddRoundKey
+    midState :: BitVector 128
     midState = foldl
-      (\st rk -> addRoundKeyWith (mixColumns (shiftRows (subBytes st))) rk)
+      (\st rk -> addRoundKeyWith (bitCoerce (mixColumns (shiftRows (subBytes (bitCoerce st))))) rk)
       state0
       (init (tail allKs))
 
-    -- 5) final round (round 10): SubBytes → ShiftRows → AddRoundKey
-    finalState = addRoundKeyWith
-      (shiftRows (subBytes midState))
+    -- final round (round 10): SubBytes → ShiftRows → AddRoundKey
+    finalState = addRoundKeyWith (bitCoerce (shiftRows (subBytes (bitCoerce midState))))
       (allKs !! 10)
 
 
@@ -304,5 +295,5 @@ aesBlockEncrypt pt allKs = finalState
 -- Clash projects, a 'topEntity' must be monomorphic and must use non-
 -- recursive types. Or, to put it hand-wavily, a 'topEntity' must be
 -- translatable to a static number of wires.
-topEntity :: Vec 4 (BitVector 32) -> Vec 11 (Vec 4 (BitVector 32))  -> Vec 4 (BitVector 32)
+topEntity :: BitVector 128 -> Vec 11 (BitVector 128) -> BitVector 128
 topEntity x y = aesBlockEncrypt x y
