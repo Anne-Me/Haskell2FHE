@@ -1,4 +1,0 @@
-read_verilog verilog/Example.Project.topEntity/topEntity.v
-flatten
-synth
-write_json aes2.json

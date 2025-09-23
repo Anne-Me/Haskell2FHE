@@ -32,7 +32,20 @@ synth
 write_json $output_file
 EOF
 
+# alternative yosys script for xag graph
+cat <<EOF > toxag.ys
+read_verilog verilog/$module.topEntity/topEntity.v
+hierarchy -check -top topEntity
+proc; opt; fsm; opt; memory; opt
+techmap; opt
+abc -g XOR,AND        
+opt_clean -purge
+write_json $output_file
+EOF
+
+# yosys toxag.ys
 yosys synth.ys
 
 rm synth.ys
+rm toxag.ys
 rm -r verilog/

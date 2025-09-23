@@ -109,10 +109,10 @@ Run the compilation tool that takes as input the program and a filename for the 
 ./compile.sh my-clash-project/src/Example/Project.hs circuit.json [-module modulename]
 ```
 
-The evaluation tool takes as input -c and the circuitfile, -n followed by the number of inputfiles and then the inputfiles themselves, -out and a file name for the result ciphertext, -b and the bitlength of the inputs or -bb and multiple numbers indicating the length of each input, -boot and the boostrapping key file, optionally -t and the number of threads to use.
+The evaluation tool takes as input -cjson ( or -cbristol depending on the format) and the circuitfile, -n followed by the number of inputfiles and then the inputfiles themselves, -out and a file name for the result ciphertext, -b and the bitlength of the inputs or -bb and multiple numbers indicating the length of each input, -boot and the boostrapping key file, optionally -t and the number of threads to use.
 
 ```
-./build/clash2tfhe -c tests/programs/ADD/add_32bit.json -n 2 ct_in_0.data ct_in_1.data -out result.data -boot boots.key -b 32 
+./build/clash2tfhe -cjson tests/programs/ADD/add_32bit.json -n 2 ct_in_0.data ct_in_1.data -out result.data -boot boots.key -b 32 
 ```
 
 #### Decryption
